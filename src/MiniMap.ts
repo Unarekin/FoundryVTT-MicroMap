@@ -8,6 +8,9 @@ export class MiniMap {
 
   public static readonly DefaultWidth = 300;
   public static readonly DefaultHeight = 200;
+  public static readonly ZoomStep = .05;
+  public static readonly MinZoom = .01;
+  public static readonly MaxZoom = 5;
 
   #bgSprite: PIXI.Sprite;
   #mapContainer = new PIXI.Container();
@@ -25,6 +28,7 @@ export class MiniMap {
   private _bgColor = "#000000";
   private _panX = 0;
   private _panY = 0;
+  private _zoom = 1;
 
   public get mode() { return this._mode; }
   public set mode(val) {
@@ -153,6 +157,14 @@ export class MiniMap {
     }
   }
 
+  public get zoom() { return this._zoom; }
+  public set zoom(val) {
+    if (val !== this.zoom) {
+      this._zoom = val;
+      this.update();
+    }
+  }
+
   protected get screenTop() {
     const uiTop = document.getElementById("scene-navigation-inactive");
     if (!(uiTop instanceof HTMLElement)) return 0;
@@ -187,25 +199,25 @@ export class MiniMap {
     this.staticSprite.visible = this.mode === "image";
     this.sceneSprite.visible = this.mode === "scene";
 
-    this.staticSprite.width = this.width;
-    this.staticSprite.height = this.height;
+    // this.staticSprite.width = this.width;
+    // this.staticSprite.height = this.height;
 
     this.overlayPlane.width = this.width;
     this.overlayPlane.height = this.height;
 
-    this.sceneSprite.width = this.width;
-    this.sceneSprite.height = this.height;
+    // this.sceneSprite.width = this.width;
+    // this.sceneSprite.height = this.height;
 
     this.#bgSprite.tint = this.bgColor;
     this.#bgSprite.width = this.width;
     this.#bgSprite.height = this.height;
 
-    // Set pan
-    this.staticSprite.x = this.sceneSprite.x = this.panX;
-    this.staticSprite.y = this.sceneSprite.y = this.panY;
-
     // Set scale
+    this.#mapContainer.scale.x = this.#mapContainer.scale.y = this.zoom;
 
+    // Set pan
+    this.#mapContainer.x = this.panX;
+    this.#mapContainer.y = this.panY;
 
     if (this.container?.parent) {
       // TODO: Account for UI elements
@@ -454,6 +466,15 @@ export class MiniMap {
       ;
   }
 
+  protected onWheel(e: WheelEvent) {
+    const bounds = this.container.getBounds();
+    if (bounds.contains(e.clientX, e.clientY)) {
+      e.stopPropagation();
+      if (e.deltaY < 0) this.zoom = Math.min(Math.max(this.zoom + MiniMap.ZoomStep, MiniMap.MinZoom), MiniMap.MaxZoom);
+      else if (e.deltaY > 0) this.zoom = Math.min(Math.max(this.zoom - MiniMap.ZoomStep, MiniMap.MinZoom), MiniMap.MaxZoom);
+    }
+  }
+
   constructor() {
 
     this.container.sortableChildren = true;
@@ -491,7 +512,9 @@ export class MiniMap {
     });
     this.container.addEventListener("pointerup", e => { this.onDragEnd(e); });
     this.container.addEventListener("pointerupoutside", e => { this.onDragEnd(e); });
-
+    // this.container.addEventListener("wheel", e => { this.onWheel(e); })
+    const board = document.getElementById("board");
+    if (board instanceof HTMLElement) board.addEventListener("wheel", e => { this.onWheel(e); })
 
     window.addEventListener("resize", () => { this.update(); })
     Hooks.on("collapseSidebar", () => { setTimeout(() => { this.update(); }, 500) });
