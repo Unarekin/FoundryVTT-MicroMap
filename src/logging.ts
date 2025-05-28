@@ -1,7 +1,7 @@
 const LOG_ICON = "🗺️";
 
 export function log(...args: unknown[]) {
-  console.log(LOG_ICON, __MODULE_NAME__, "|", ...args);
+  console.log(LOG_ICON, __MODULE_TITLE__, "|", ...args);
 }
 
 export function logError(err: Error) {
