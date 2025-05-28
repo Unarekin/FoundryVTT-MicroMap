@@ -67,7 +67,7 @@ export class MiniMap {
     }
   }
 
-  public get width() { return this.container.width; }
+  public get width() { return this._width; }
   public set width(val) {
     if (val !== this.width) {
       this._width = val;
@@ -75,7 +75,7 @@ export class MiniMap {
     }
   }
 
-  public get height() { return this.container.height; }
+  public get height() { return this._height }
   public set height(val) {
     if (val !== this.height) {
       this._height = val;
@@ -104,7 +104,7 @@ export class MiniMap {
   protected readonly screenLeft = 0;
   // protected get screenRight() { return window.innerWidth - this.width; }
   protected get screenRight() {
-    const uiRight = document.getElementById("ui-right");
+    const uiRight = document.getElementById("chat-message");
     if (!(uiRight instanceof HTMLElement)) return window.innerWidth - this.width;
     const { x } = uiRight.getBoundingClientRect();
     return x - this.width;
@@ -124,6 +124,18 @@ export class MiniMap {
     this.sceneSprite.visible = this.mode === "scene";
 
     this.overlaySprite.visible = !!this.overlay;
+
+    this.staticSprite.width = this.width;
+    this.staticSprite.height = this.height;
+
+    this.overlaySprite.width = this.width;
+    this.overlaySprite.height = this.height;
+
+    this.sceneSprite.width = this.width;
+    this.sceneSprite.height = this.height;
+
+    // Set everything to top left of container
+    this.staticSprite.x = this.staticSprite.y = this.overlaySprite.x = this.overlaySprite.y = this.sceneSprite.x = this.sceneSprite.y = 0;
 
     if (this.container?.parent) {
       // TODO: Account for UI elements
@@ -156,20 +168,29 @@ export class MiniMap {
 
     this.container.sortableChildren = true;
 
-    this.staticSprite = PIXI.Sprite.from(this.image);
+    if (this.image)
+      this.staticSprite = PIXI.Sprite.from(this.image);
+    else
+      this.staticSprite = new PIXI.Sprite();
+
+    if (this.overlay)
+      this.overlaySprite = PIXI.Sprite.from(this.overlay);
+    else
+      this.overlaySprite = new PIXI.Sprite();
+
     this.sceneSprite = new PIXI.Sprite();
-    this.overlaySprite = new PIXI.Sprite();
-
-    this.staticSprite.width = MiniMap.DefaultWidth;
-    this.staticSprite.height = MiniMap.DefaultHeight;
-
-    this.overlaySprite.width = this.staticSprite.width;
-    this.overlaySprite.height = this.staticSprite.height;
 
     this.container.addChild(this.staticSprite);
     this.container.addChild(this.sceneSprite);
     this.container.addChild(this.overlaySprite);
 
-    this.update();
+    if (!this.staticSprite.texture.valid)
+      this.staticSprite.texture.baseTexture.once("loaded", () => { this.update(); })
+    else
+      this.update();
+
+    window.addEventListener("resize", () => { this.update(); })
+    Hooks.on("collapseSidebar", () => { setTimeout(() => { this.update(); }, 500) });
+    Hooks.on("changeSidebarTab", () => { this.update(); });
   }
 }
