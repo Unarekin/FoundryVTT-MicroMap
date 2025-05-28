@@ -1,5 +1,6 @@
 import { MapMode, MapPosition, MapShape } from './types';
 import { coerceScene } from './coercion';
+import { log } from 'logging';
 
 export class MiniMap {
   public readonly container = new PIXI.Container();
@@ -164,9 +165,62 @@ export class MiniMap {
   protected sceneSprite: PIXI.Sprite;
   protected overlaySprite: PIXI.Sprite;
 
+  private _contextMenu: foundry.applications.ux.ContextMenu<false> | undefined = undefined;
+
+  protected async showContextMenu(x: number, y: number) {
+    log("Showing context menu:", x, y);
+
+    if (this._contextMenu) await this._contextMenu.close();
+
+    const elem = document.createElement("section");
+    elem.style.position = "absolute";
+    elem.style.pointerEvents = "auto";
+    elem.dataset.role = "minimap-menu"
+
+    const container = document.getElementById("mm-menu-container");
+    if (!(container instanceof HTMLElement)) return;
+    elem.style.top = `${y}px`;
+    elem.style.left = `${x}px`
+
+    container.appendChild(elem);
+
+    const menu = new foundry.applications.ux.ContextMenu(
+      container,
+      `[data-role="minimap-menu"]`,
+      [
+        {
+          name: "Test",
+          callback: () => { /* empty */ }
+        }
+      ],
+      {
+        onClose: () => {
+          elem.remove();
+          if (this._contextMenu === menu) this._contextMenu = undefined;
+        },
+        jQuery: false
+      }
+    );
+
+
+    this._contextMenu = menu;
+    await menu.render(elem);
+    const listener = (e: MouseEvent) => {
+      if (!menu.element.contains(e.currentTarget as HTMLElement)) {
+        void menu.close();
+        document.removeEventListener("click", listener);
+        document.removeEventListener("contextmenu", listener);
+      }
+    };
+    document.addEventListener("click", listener);
+    document.addEventListener("contextmenu", listener);
+  }
+
   constructor() {
 
     this.container.sortableChildren = true;
+    this.container.interactive = true;
+    this.container.eventMode = "dynamic";
 
     if (this.image)
       this.staticSprite = PIXI.Sprite.from(this.image);
@@ -188,6 +242,11 @@ export class MiniMap {
       this.staticSprite.texture.baseTexture.once("loaded", () => { this.update(); })
     else
       this.update();
+
+    this.container.addEventListener("rightclick", (e: PIXI.FederatedPointerEvent) => {
+      e.preventDefault();
+      void this.showContextMenu(e.clientX, e.clientY);
+    });
 
     window.addEventListener("resize", () => { this.update(); })
     Hooks.on("collapseSidebar", () => { setTimeout(() => { this.update(); }, 500) });

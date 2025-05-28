@@ -23,5 +23,7 @@ export class MiniatureMapCanvasGroup extends PIXI.Container {
 
     this.miniMap = new MiniMap();
     this.addChild(this.miniMap.container);
+    this.interactiveChildren = true;
+    this.interactive = true;
   }
 }

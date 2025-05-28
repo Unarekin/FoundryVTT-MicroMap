@@ -20,6 +20,16 @@ Hooks.once("canvasReady", () => {
     const canvasGroup = new MiniatureMapCanvasGroup();
     canvas.stage.addChild(canvasGroup);
 
+    const menuContainer = document.createElement("section");
+    menuContainer.id = "mm-menu-container";
+    menuContainer.style.position = "absolute";
+    menuContainer.style.pointerEvents = "none";
+    menuContainer.style.top = "0";
+    menuContainer.style.left = "0";
+    menuContainer.style.width = "100%";
+    menuContainer.style.height = "100%";
+    document.body.appendChild(menuContainer);
+
     log("Canvas group initialized.");
   } catch (err) {
     logError(err as Error);
