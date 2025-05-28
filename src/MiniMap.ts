@@ -1,6 +1,7 @@
 import { MapMode, MapPosition, MapShape } from './types';
 import { coerceScene } from './coercion';
-import { log } from 'logging';
+import { logError } from 'logging';
+import { getGame } from 'utils';
 
 export class MiniMap {
   public readonly container = new PIXI.Container();
@@ -167,9 +168,34 @@ export class MiniMap {
 
   private _contextMenu: foundry.applications.ux.ContextMenu<false> | undefined = undefined;
 
-  protected async showContextMenu(x: number, y: number) {
-    log("Showing context menu:", x, y);
+  protected getContextMenuItems(): foundry.applications.ux.ContextMenu.Entry<HTMLElement>[] {
+    return [
+      {
+        name: "MINIMAP.CONTEXTMENU.HIDE",
+        icon: `<i class="fas fa-eye-slash"></i>`,
+        callback: () => {
+          getGame()
+            .then(game => game.settings.set(__MODULE_ID__, "show", false))
+            .catch((err: Error) => { logError(err); });
+        }
+      },
+      {
+        name: "MINIMAP.CONTEXTMENU.SETTINGS",
+        icon: `<i class="fas fa-cogs"></i>`,
+        callback: () => {
+          const app = foundry.applications.instances.has("settings-config") ? foundry.applications.instances.get("settings-config") : new foundry.applications.settings.SettingsConfig();
+          if (app instanceof foundry.applications.settings.SettingsConfig) {
+            app.render({ force: true })
+              .then(() => { app.changeTab(__MODULE_ID__, "categories"); })
+              .catch((err: Error) => { logError(err); })
+          }
+        }
+      }
+    ]
+  }
 
+
+  protected async showContextMenu(x: number, y: number) {
     if (this._contextMenu) await this._contextMenu.close();
 
     const elem = document.createElement("section");
@@ -184,15 +210,15 @@ export class MiniMap {
 
     container.appendChild(elem);
 
+    const menuItems = this.getContextMenuItems();
+
+    // No visible items
+    if (!menuItems.some(item => typeof item.condition === "function" ? item.condition(elem) : typeof item.condition === "boolean" ? item.condition : true)) return;
+
     const menu = new foundry.applications.ux.ContextMenu(
       container,
       `[data-role="minimap-menu"]`,
-      [
-        {
-          name: "Test",
-          callback: () => { /* empty */ }
-        }
-      ],
+      this.getContextMenuItems(),
       {
         onClose: () => {
           elem.remove();

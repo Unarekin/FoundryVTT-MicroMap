@@ -15,7 +15,7 @@ Hooks.once("init", () => {
   getGame()
     .then(game => {
       // Register settings
-      game.settings.register("miniature-map", "show", {
+      game.settings.register(__MODULE_ID__, "show", {
         name: "MINIMAP.SETTINGS.SHOW.NAME",
         hint: "MINIMAP.SETTINGS.SHOW.HINT",
         config: true,
@@ -25,7 +25,7 @@ Hooks.once("init", () => {
         requiresReload: false,
       });
 
-      game.settings.register("miniature-map", "position", {
+      game.settings.register(__MODULE_ID__, "position", {
         name: "MINIMAP.SETTINGS.POSITION.NAME",
         hint: "MINIMAP.SETTINGS.POSITION.HINT",
         config: true,
@@ -41,7 +41,7 @@ Hooks.once("init", () => {
         }
       });
 
-      game.settings.register("miniature-map", "shape", {
+      game.settings.register(__MODULE_ID__, "shape", {
         name: "MINIMAP.SETTINGS.SHAPE.NAME",
         hint: "MINIMAP.SETTINGS.SHAPE.HINT",
         config: true,
@@ -57,7 +57,7 @@ Hooks.once("init", () => {
         requiresReload: false
       });
 
-      game.settings.register("miniature-map", "mask", {
+      game.settings.register(__MODULE_ID__, "mask", {
         name: "MINIMAP.SETTINGS.MASK.NAME",
         hint: "MINIMAP.SETTINGS.MASK.HINT",
         config: true,
@@ -68,7 +68,7 @@ Hooks.once("init", () => {
         filePicker: "image"
       });
 
-      game.settings.register("miniature-map", "overlay", {
+      game.settings.register(__MODULE_ID__, "overlay", {
         name: "MINIMAP.SETTINGS.OVERLAY.NAME",
         hint: "MINIMAP.SETTINGS.OVERLAY.HINT",
         config: true,
