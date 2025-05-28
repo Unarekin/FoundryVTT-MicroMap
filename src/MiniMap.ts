@@ -116,7 +116,12 @@ export class MiniMap {
     return uiTop.getBoundingClientRect().y;
   }
 
-  protected readonly screenLeft = 0;
+  public get screenLeft() {
+    const uiLeft = document.getElementById("ui-left-column-1");
+    if (!(uiLeft instanceof HTMLElement)) return 0;
+    return uiLeft.getBoundingClientRect().right;
+  }
+
   // protected get screenRight() { return window.innerWidth - this.width; }
   protected get screenRight() {
     const uiRight = document.getElementById("chat-message");
