@@ -18,6 +18,7 @@ export class MiniMap {
   private _width = 300;
   private _height = 200;
   private _padding = 0;
+  private _mask = "";
 
   public get mode() { return this._mode; }
   public set mode(val) {
@@ -65,6 +66,7 @@ export class MiniMap {
   public set shape(val) {
     if (val !== this.shape) {
       this._shape = val;
+      this.setMask(val);
       this.update();
     }
   }
@@ -73,6 +75,7 @@ export class MiniMap {
   public set width(val) {
     if (val !== this.width) {
       this._width = val;
+      this.setMask(this.shape);
       this.update();
     }
   }
@@ -81,6 +84,7 @@ export class MiniMap {
   public set height(val) {
     if (val !== this.height) {
       this._height = val;
+      this.setMask(this.shape);
       this.update();
     }
   }
@@ -105,6 +109,15 @@ export class MiniMap {
   public set visible(val) {
     if (val !== this.visible) {
       this.container.visible = val;
+      this.update();
+    }
+  }
+
+  public get mask() { return this._mask; }
+  public set mask(val) {
+    if (val !== this.mask) {
+      this._mask = val;
+      if (this.shape === "mask") this.setMask(this.shape);
       this.update();
     }
   }
@@ -277,6 +290,88 @@ export class MiniMap {
     this.update();
   }
 
+  protected generateRectangleMask(): PIXI.Texture | undefined {
+    const canvas = document.createElement("canvas");
+    canvas.width = this.width;
+    canvas.height = this.height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    return PIXI.Texture.from(canvas);
+  }
+
+  protected generateCircularMask(): PIXI.Texture | undefined {
+    const canvas = document.createElement("canvas");
+    canvas.width = this.width;
+    canvas.height = this.height;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.fillStyle = "white";
+    ctx.beginPath();
+    ctx.arc(canvas.width / 2, canvas.height / 2, Math.min(canvas.width / 2, canvas.height / 2), 0, 2 * Math.PI);
+    ctx.fill();
+
+    return PIXI.Texture.from(canvas);
+  }
+
+  protected generateDiamondMask(): PIXI.Texture | undefined {
+    const canvas = document.createElement("canvas");
+    canvas.width = this.width;
+    canvas.height = this.height;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.fillStyle = "white";
+    ctx.beginPath();
+    ctx.moveTo(canvas.width / 2, 0);
+    ctx.lineTo(0, canvas.height / 2);
+    ctx.lineTo(canvas.width / 2, canvas.height);
+    ctx.lineTo(canvas.width, canvas.height / 2);
+    ctx.closePath();
+    ctx.fill();
+
+    return PIXI.Texture.from(canvas);
+  }
+
+  protected generateMaskImage(shape: MapShape): PIXI.Texture | undefined {
+    switch (shape) {
+      case "circle":
+        return this.generateCircularMask();
+        break;
+      case "diamond":
+        return this.generateDiamondMask();
+        break;
+      case "mask":
+        if (this.mask) return PIXI.Texture.from(this.mask);
+        break;
+      case "rectangle":
+        return this.generateRectangleMask();
+        break;
+    }
+  }
+
+  protected setMask(shape: MapShape) {
+    const texture = this.generateMaskImage(shape);
+    if (!(texture instanceof PIXI.Texture)) return;
+
+    if (this.staticSprite.mask instanceof PIXI.Sprite && !this.staticSprite.mask.destroyed) this.staticSprite.mask.destroy();
+    if (this.sceneSprite.mask instanceof PIXI.Sprite && !this.sceneSprite.mask.destroyed) this.sceneSprite.mask.destroy();
+
+    const sprite = new PIXI.Sprite(texture);
+    sprite.width = this.width;
+    sprite.height = this.height;
+    this.container.addChild(sprite);
+    this.staticSprite.mask = sprite;
+    this.sceneSprite.mask = sprite;
+    // this.container.mask = sprite;
+  }
+
   constructor() {
 
     this.container.sortableChildren = true;
@@ -324,6 +419,7 @@ export class MiniMap {
         this.position = game.settings.get(__MODULE_ID__, "position") as MapPosition;
         this.shape = game.settings.get(__MODULE_ID__, "shape") as MapShape;
         this.padding = game.settings.get(__MODULE_ID__, "padding") as number;
+        this.mask = game.settings.get(__MODULE_ID__, "mask") as string;
 
         const overlaySettings = game.settings.get(__MODULE_ID__, "overlaySettings") as OverlaySettings;
         this.setOverlayFromSettings(overlaySettings);

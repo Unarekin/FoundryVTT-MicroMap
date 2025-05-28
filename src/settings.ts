@@ -1,7 +1,7 @@
 import { getGame, getMiniMap } from "./utils";
 import { log, logError } from "./logging";
 import { MiniMap } from "MiniMap";
-import { MapPosition, OverlaySettings } from './types';
+import { MapPosition, MapShape, OverlaySettings } from './types';
 import { OverlaySettingsApplication } from "./applications";
 
 Hooks.once("init", () => {
@@ -73,7 +73,12 @@ Hooks.once("init", () => {
           mask: "MINIMAP.SETTINGS.SHAPE.MASK"
         },
         default: "rectangle",
-        requiresReload: false
+        requiresReload: false,
+        onChange(shape: MapShape) {
+          const miniMap = getMiniMap();
+          if (!(miniMap instanceof MiniMap)) return;
+          miniMap.shape = shape;
+        }
       });
 
       game.settings.register(__MODULE_ID__, "mask", {
@@ -84,7 +89,12 @@ Hooks.once("init", () => {
         type: String,
         default: "",
         requiresReload: false,
-        filePicker: "image"
+        filePicker: "image",
+        onChange(file: string) {
+          const miniMap = getMiniMap();
+          if (!(miniMap instanceof MiniMap)) return;
+          miniMap.mask = file;
+        }
       });
 
       game.settings.registerMenu(__MODULE_ID__, "overlayMenu", {
