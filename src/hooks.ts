@@ -34,4 +34,5 @@ Hooks.once("canvasReady", () => {
   } catch (err) {
     logError(err as Error);
   }
-})
+});
+

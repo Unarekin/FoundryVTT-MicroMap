@@ -7,7 +7,7 @@
     "outDir": "dist",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "types": ["fvtt-types", "./@types/global.d.ts"],
+    "types": ["fvtt-types", "./@types/global.d.ts", "@ethaks/fvtt-quench"],
     "moduleResolution": "bundler",
     "noEmit": false,
     "target": "ESNext",
