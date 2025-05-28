@@ -1,2 +1,2 @@
-import "./Settings";
+import "./settings";
 import "./hooks";
