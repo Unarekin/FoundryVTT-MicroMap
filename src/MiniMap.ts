@@ -17,7 +17,7 @@ export class MiniMap {
   private _position: MapPosition = "bottomRight";
   private _width = 300;
   private _height = 200;
-  private _padding = 50;
+  private _padding = 0;
 
   public get mode() { return this._mode; }
   public set mode(val) {
@@ -109,7 +109,13 @@ export class MiniMap {
     }
   }
 
-  protected readonly screenTop = 0;
+  protected get screenTop() {
+    const uiTop = document.getElementById("scene-navigation-inactive");
+    if (!(uiTop instanceof HTMLElement)) return 0;
+
+    return uiTop.getBoundingClientRect().y;
+  }
+
   protected readonly screenLeft = 0;
   // protected get screenRight() { return window.innerWidth - this.width; }
   protected get screenRight() {
@@ -155,7 +161,7 @@ export class MiniMap {
       // TODO: Account for UI elements
       switch (this.position) {
         case "bottomLeft":
-          this.container.x = this.screenTop + this.padding;
+          this.container.x = this.screenLeft + this.padding;
           this.container.y = this.screenBottom - this.padding;
           break;
         case "bottomRight":
@@ -163,8 +169,8 @@ export class MiniMap {
           this.container.y = this.screenBottom - this.padding;
           break;
         case "topLeft":
-          this.container.x = this.screenTop + this.padding;
-          this.container.y = this.screenLeft + this.padding;
+          this.container.x = this.screenLeft + this.padding;
+          this.container.y = this.screenTop + this.padding;
           break;
         case "topRight":
           this.container.x = this.screenRight - this.padding;
