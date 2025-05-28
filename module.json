@@ -1,0 +1,39 @@
+{
+  "id": "miniature-map",
+  "title": "Miniature Map",
+  "description": "",
+  "version": "#{VERSION}#",
+  "library": "false",
+  "compatibility": {
+    "minimum": 12,
+    "verified": 12,
+    "maximum": 13
+  },
+  "authors": [
+    {
+      "name": "Unarekin",
+      "url": "https://github.com/Unarekin",
+      "discord": "unarekin"
+    }
+  ],
+  "socket": true,
+  "relationships": {
+    "systems": [],
+    "requires": []
+  },
+  "esmodules": ["module.js"],
+  "scripts": [],
+  "styles": ["styles/module.css"],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "languages/en.json"
+    }
+  ],
+  "url": "#{URL}#",
+  "manifest": "#{MANIFEST}#",
+  "download": "#{DOWNLOAD}#",
+  "license": "LICENSE",
+  "readme": "README.md"
+}
