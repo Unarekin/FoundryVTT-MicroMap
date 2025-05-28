@@ -303,6 +303,7 @@ export class MiniMap {
         this.shape = game.settings.get(__MODULE_ID__, "shape") as MapShape;
         // this.mask = game.settings.get(__MODULE_ID__, "mask") as string;
         this.overlay = game.settings.get(__MODULE_ID__, "overlay") as string;
+        this.padding = game.settings.get(__MODULE_ID__, "padding") as number;
       })
       .catch((err: Error) => { logError(err); })
 

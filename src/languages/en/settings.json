@@ -1,33 +1,37 @@
 {
   "MINIMAP": {
     "SETTINGS": {
-      "SHOW": {
-        "NAME": "Show MiniMap",
-        "HINT": "If enabled, will show the minimap."
-      },
-      "SHAPE": {
-        "NAME": "MiniMap Shape",
-        "HINT": "The shape of the minimap",
-        "CIRCLE": "Circular",
-        "RECTANGLE": "Rectangular",
-        "DIAMOND": "Diamond",
-        "MASK": "Image Mask"
-      },
       "MASK": {
-        "NAME": "Image Mask",
-        "HINT": "An image to use as a mask for shaping the minimap."
+        "HINT": "An image to use as a mask for shaping the minimap.",
+        "NAME": "Image Mask"
       },
       "OVERLAY": {
-        "NAME": "MiniMap Overlay",
-        "HINT": "An image to overlay atop the minimap."
+        "HINT": "An image to overlay atop the minimap.",
+        "NAME": "MiniMap Overlay"
+      },
+      "PADDING": {
+        "HINT": "Space, in pixels, from the edge of the canvas area.",
+        "NAME": "Padding"
       },
       "POSITION": {
-        "NAME": "MiniMap Position",
-        "HINT": "Relative screen position of the minimap.",
-        "TOPLEFT": "Top Left",
-        "TOPRIGHT": "Top Right",
         "BOTTOMLEFT": "Bottom Left",
-        "BOTTOMRIGHT": "Bottom Right"
+        "BOTTOMRIGHT": "Bottom Right",
+        "HINT": "Relative screen position of the minimap.",
+        "NAME": "MiniMap Position",
+        "TOPLEFT": "Top Left",
+        "TOPRIGHT": "Top Right"
+      },
+      "SHAPE": {
+        "CIRCLE": "Circular",
+        "DIAMOND": "Diamond",
+        "HINT": "The shape of the minimap",
+        "MASK": "Image Mask",
+        "NAME": "MiniMap Shape",
+        "RECTANGLE": "Rectangular"
+      },
+      "SHOW": {
+        "HINT": "If enabled, will show the minimap.",
+        "NAME": "Show MiniMap"
       }
     }
   }

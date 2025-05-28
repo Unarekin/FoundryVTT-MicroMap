@@ -44,6 +44,21 @@ Hooks.once("init", () => {
         }
       });
 
+      game.settings.register(__MODULE_ID__, "padding", {
+        name: "MINIMAP.SETTINGS.PADDING.NAME",
+        hint: "MINIMAP.SETTINGS.PADDING.HINT",
+        config: true,
+        scope: "world",
+        type: Number,
+        default: 0,
+        requiresReload: false,
+        onChange(value: number) {
+          const map = getMiniMap();
+          if (!(map instanceof MiniMap)) return;
+          map.padding = value;
+        }
+      });
+
       game.settings.register(__MODULE_ID__, "shape", {
         name: "MINIMAP.SETTINGS.SHAPE.NAME",
         hint: "MINIMAP.SETTINGS.SHAPE.HINT",
