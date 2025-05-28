@@ -1,3 +1,6 @@
+import { MiniatureMapCanvasGroup } from "MiniatureMapCanvasGroup";
+import { MiniMap } from "MiniMap";
+
 let gameReadyPromise: Promise<void> | undefined = undefined;
 
 /**
@@ -12,4 +15,11 @@ export async function getGame(): Promise<ReadyGame> {
 
   await gameReadyPromise;
   return game as unknown as ReadyGame;
+}
+
+export function getMiniMap(): MiniMap | undefined {
+  const group = canvas?.stage?.getChildByName("MiniatureMapCanvasGroup");
+  if (!(group instanceof MiniatureMapCanvasGroup)) return;
+
+  return group.miniMap;
 }

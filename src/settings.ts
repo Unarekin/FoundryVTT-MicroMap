@@ -1,5 +1,6 @@
-import { getGame } from "./utils";
+import { getGame, getMiniMap } from "./utils";
 import { log, logError } from "./logging";
+import { MiniMap } from "MiniMap";
 
 
 Hooks.once("init", () => {
@@ -23,6 +24,11 @@ Hooks.once("init", () => {
         type: Boolean,
         default: false,
         requiresReload: false,
+        onChange(value: boolean) {
+          const map = getMiniMap();
+          if (!(map instanceof MiniMap)) return;
+          map.visible = value;
+        }
       });
 
       game.settings.register(__MODULE_ID__, "position", {

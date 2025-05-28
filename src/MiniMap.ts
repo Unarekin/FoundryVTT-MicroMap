@@ -101,6 +101,13 @@ export class MiniMap {
     }
   }
 
+  public get visible() { return this.container.visible; }
+  public set visible(val) {
+    if (val !== this.visible) {
+      this.container.visible = val;
+      this.update();
+    }
+  }
 
   protected readonly screenTop = 0;
   protected readonly screenLeft = 0;
@@ -122,6 +129,11 @@ export class MiniMap {
    * Updates the visuals of our minimap in accordance with its settings.
    */
   protected update() {
+
+    getGame()
+      .then(game => { this.visible = !!game.settings.get(__MODULE_ID__, "show"); })
+      .catch((err: Error) => { logError(err); })
+
     this.staticSprite.visible = this.mode === "image";
     this.sceneSprite.visible = this.mode === "scene";
 
