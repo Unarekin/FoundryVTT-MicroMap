@@ -10,6 +10,7 @@ export class MiniMap {
   public static readonly DefaultHeight = 200;
 
   #bgSprite: PIXI.Sprite;
+  #mapContainer = new PIXI.Container();
 
   private _mode: MapMode = "image";
   private _scene: Scene | undefined = undefined;
@@ -22,6 +23,8 @@ export class MiniMap {
   private _padding = 0;
   private _mask = "";
   private _bgColor = "#000000";
+  private _panX = 0;
+  private _panY = 0;
 
   public get mode() { return this._mode; }
   public set mode(val) {
@@ -134,6 +137,22 @@ export class MiniMap {
     }
   }
 
+  public get panX() { return this._panX; }
+  public set panX(val) {
+    if (val !== this.panX) {
+      this._panX = val;
+      this.update();
+    }
+  }
+
+  public get panY() { return this._panY; }
+  public set panY(val) {
+    if (val !== this.panY) {
+      this._panY = val;
+      this.update();
+    }
+  }
+
   protected get screenTop() {
     const uiTop = document.getElementById("scene-navigation-inactive");
     if (!(uiTop instanceof HTMLElement)) return 0;
@@ -181,8 +200,12 @@ export class MiniMap {
     this.#bgSprite.width = this.width;
     this.#bgSprite.height = this.height;
 
-    // Set everything to top left of container
-    this.staticSprite.x = this.staticSprite.y = this.overlayPlane.x = this.overlayPlane.y = this.sceneSprite.x = this.sceneSprite.y = 0;
+    // Set pan
+    this.staticSprite.x = this.sceneSprite.x = this.panX;
+    this.staticSprite.y = this.sceneSprite.y = this.panY;
+
+    // Set scale
+
 
     if (this.container?.parent) {
       // TODO: Account for UI elements
@@ -375,19 +398,60 @@ export class MiniMap {
   protected setMask(shape: MapShape) {
     const texture = this.generateMaskImage(shape);
     if (!(texture instanceof PIXI.Texture)) return;
+    if (this.#mapContainer.mask instanceof PIXI.Sprite && !this.#mapContainer.mask.destroyed) this.#mapContainer.mask.destroy();
 
-    if (this.staticSprite.mask instanceof PIXI.Sprite && !this.staticSprite.mask.destroyed) this.staticSprite.mask.destroy();
-    if (this.sceneSprite.mask instanceof PIXI.Sprite && !this.sceneSprite.mask.destroyed) this.sceneSprite.mask.destroy();
-    if (this.#bgSprite.mask instanceof PIXI.Sprite && !this.#bgSprite.mask.destroyed) this.#bgSprite.mask.destroy();
+    // if (this.staticSprite.mask instanceof PIXI.Sprite && !this.staticSprite.mask.destroyed) this.staticSprite.mask.destroy();
+    // if (this.sceneSprite.mask instanceof PIXI.Sprite && !this.sceneSprite.mask.destroyed) this.sceneSprite.mask.destroy();
+    // if (this.#bgSprite.mask instanceof PIXI.Sprite && !this.#bgSprite.mask.destroyed) this.#bgSprite.mask.destroy();
 
     const sprite = new PIXI.Sprite(texture);
     sprite.width = this.width;
     sprite.height = this.height;
     this.container.addChild(sprite);
-    this.staticSprite.mask = sprite;
-    this.sceneSprite.mask = sprite;
+    this.#mapContainer.mask = sprite;
+    // this.staticSprite.mask = sprite;
+    // this.sceneSprite.mask = sprite;
     this.#bgSprite.mask = sprite;
     // this.container.mask = sprite;
+  }
+
+  // #dragListener: (tyepof this.onDragMove) | null = null;
+  #dragListener: ((e: PIXI.FederatedPointerEvent) => void) | null = null;
+
+  protected onDragStart(e: PIXI.FederatedPointerEvent) {
+    if (!canvas?.app?.stage) return;
+    if (this.#dragListener) canvas.app.stage.off("pointermove", this.#dragListener);
+    this.#dragListener = this.onDragMove.bind(this);
+    canvas.app.stage.on("pointermove", this.#dragListener);
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  protected onDragEnd(e: PIXI.FederatedPointerEvent) {
+    if (this.#dragListener) {
+      if (canvas?.app?.stage) canvas.app.stage.off("pointermove", this.#dragListener);
+
+      this.#dragListener = null;
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }
+
+  protected onDragMove(e: PIXI.FederatedPointerEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    this.panX += e.movementX;
+    this.panY += e.movementY;
+  }
+
+  protected onRightClick(e: PIXI.FederatedPointerEvent) {
+    getGame()
+      .then(game => {
+        if (game.user.can("SETTINGS_MODIFY"))
+          return this.showContextMenu(e.clientX, e.clientY);
+      })
+      .catch((err: Error) => { logError(err); })
+      ;
   }
 
   constructor() {
@@ -409,8 +473,9 @@ export class MiniMap {
     this.#bgSprite = new PIXI.Sprite(PIXI.Texture.WHITE);
 
     this.container.addChild(this.#bgSprite);
-    this.container.addChild(this.staticSprite);
-    this.container.addChild(this.sceneSprite);
+    this.#mapContainer.addChild(this.staticSprite);
+    this.#mapContainer.addChild(this.sceneSprite);
+    this.container.addChild(this.#mapContainer);
     this.container.addChild(this.overlayPlane);
 
     if (!this.staticSprite.texture.valid)
@@ -418,17 +483,15 @@ export class MiniMap {
     else
       this.update();
 
-    this.container.addEventListener("rightclick", (e: PIXI.FederatedPointerEvent) => {
-      getGame()
-        .then(game => {
-          if (game.user.can("SETTINGS_MODIFY")) {
-            e.preventDefault();
-            return this.showContextMenu(e.clientX, e.clientY);
-          }
-        })
-        .catch((err: Error) => { logError(err); })
-        ;
+    this.container.addEventListener("pointerdown", e => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.button === 0) this.onDragStart(e);
+      else if (e.button === 2) this.onRightClick(e);
     });
+    this.container.addEventListener("pointerup", e => { this.onDragEnd(e); });
+    this.container.addEventListener("pointerupoutside", e => { this.onDragEnd(e); });
+
 
     window.addEventListener("resize", () => { this.update(); })
     Hooks.on("collapseSidebar", () => { setTimeout(() => { this.update(); }, 500) });
@@ -448,9 +511,10 @@ export class MiniMap {
 
         const overlaySettings = game.settings.get(__MODULE_ID__, "overlaySettings") as OverlaySettings;
         this.setOverlayFromSettings(overlaySettings);
+        this.setMask(this.shape);
       })
       .catch((err: Error) => { logError(err); })
 
-    this.update = foundry.utils.debounce(this.update.bind(this), 100);
+    // this.update = foundry.utils.debounce(this.update.bind(this), 16)
   }
 }
