@@ -140,11 +140,6 @@ export class MiniMap {
    * Updates the visuals of our minimap in accordance with its settings.
    */
   protected update() {
-
-    getGame()
-      .then(game => { this.visible = !!game.settings.get(__MODULE_ID__, "show"); })
-      .catch((err: Error) => { logError(err); })
-
     this.staticSprite.visible = this.mode === "image";
     this.sceneSprite.visible = this.mode === "scene";
 
@@ -300,5 +295,21 @@ export class MiniMap {
     window.addEventListener("resize", () => { this.update(); })
     Hooks.on("collapseSidebar", () => { setTimeout(() => { this.update(); }, 500) });
     Hooks.on("changeSidebarTab", () => { this.update(); });
+
+    getGame()
+      .then(game => {
+        this.visible = !!game.settings.get(__MODULE_ID__, "show");
+        this.position = game.settings.get(__MODULE_ID__, "position") as MapPosition;
+        this.shape = game.settings.get(__MODULE_ID__, "shape") as MapShape;
+        // this.mask = game.settings.get(__MODULE_ID__, "mask") as string;
+        this.overlay = game.settings.get(__MODULE_ID__, "overlay") as string;
+      })
+      .catch((err: Error) => { logError(err); })
+
+    /*
+        getGame()
+      .then(game => { this.visible = !!game.settings.get(__MODULE_ID__, "show"); })
+      .catch((err: Error) => { logError(err); })
+    */
   }
 }

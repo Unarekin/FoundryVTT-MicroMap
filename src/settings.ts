@@ -4,15 +4,7 @@ import { MiniMap } from "MiniMap";
 import { MapPosition } from './types';
 
 Hooks.once("init", () => {
-  /*
-        name: "Current StageObjects",
-        hint: "Serialized list of StageObjects currently present.",
-        config: false,
-        scope: "world",
-        type: Array,
-        default: [],
-        requiresReload: false
-  */
+
   getGame()
     .then(game => {
       // Register settings
