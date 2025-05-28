@@ -11,6 +11,7 @@
     "moduleResolution": "bundler",
     "noEmit": false,
     "target": "ESNext",
+    "module": "ESNext",
     "strict": true,
     "noUncheckedIndexedAccess": false,
     "allowJs": true,

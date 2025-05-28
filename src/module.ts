@@ -1,7 +1,8 @@
 import { log, logError } from "./logging";
 import { MiniatureMapCanvasGroup } from './MiniatureMapCanvasGroup';
+import "./Settings";
 
-Hooks.on("canvasReady", () => {
+Hooks.once("canvasReady", () => {
   try {
     if (!canvas?.stage) return;
     if (canvas.stage.getChildByName("MiniatureMapCanvasGroup")) return;

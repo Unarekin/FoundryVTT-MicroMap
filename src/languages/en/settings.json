@@ -1,0 +1,34 @@
+{
+  "MINIMAP": {
+    "SETTINGS": {
+      "SHOW": {
+        "NAME": "Show MiniMap",
+        "HINT": "If enabled, will show the minimap."
+      },
+      "SHAPE": {
+        "NAME": "MiniMap Shape",
+        "HINT": "The shape of the minimap",
+        "CIRCLE": "Circular",
+        "RECTANGLE": "Rectangular",
+        "DIAMOND": "Diamond",
+        "MASK": "Image Mask"
+      },
+      "MASK": {
+        "NAME": "Image Mask",
+        "HINT": "An image to use as a mask for shaping the minimap."
+      },
+      "OVERLAY": {
+        "NAME": "MiniMap Overlay",
+        "HINT": "An image to overlay atop the minimap."
+      },
+      "POSITION": {
+        "NAME": "MiniMap Position",
+        "HINT": "Relative screen position of the minimap.",
+        "TOPLEFT": "Top Left",
+        "TOPRIGHT": "Top Right",
+        "BOTTOMLEFT": "Bottom Left",
+        "BOTTOMRIGHT": "Bottom Right"
+      }
+    }
+  }
+}
