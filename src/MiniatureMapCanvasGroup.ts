@@ -1,8 +1,11 @@
+import { MiniMap } from './MiniMap';
 export class MiniatureMapCanvasGroup extends PIXI.Container {
   protected setInverseMatrix() {
     if (canvas?.app?.stage)
       this.transform.setFromMatrix(canvas.app.stage.localTransform.clone().invert());
   }
+
+  public readonly miniMap: MiniMap;
 
   constructor() {
     super();
@@ -17,5 +20,8 @@ export class MiniatureMapCanvasGroup extends PIXI.Container {
         this.setInverseMatrix();
       })
     }
+
+    this.miniMap = new MiniMap();
+    this.addChild(this.miniMap.container);
   }
 }
