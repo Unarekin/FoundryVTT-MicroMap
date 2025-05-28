@@ -1,0 +1,12 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["src/**/*.ts"],
+  "out": "docs",
+  "cleanOutputDir": true,
+  "plugin": [
+    "typedoc-github-theme",
+    "typedoc-plugin-rename-defaults",
+    "typedoc-plugin-version-header"
+  ],
+  "useTsLinkResolution": true
+}
