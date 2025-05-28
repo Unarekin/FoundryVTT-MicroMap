@@ -1,7 +1,7 @@
 import { getGame, getMiniMap } from "./utils";
 import { log, logError } from "./logging";
 import { MiniMap } from "MiniMap";
-
+import { MapPosition } from './types';
 
 Hooks.once("init", () => {
   /*
@@ -44,6 +44,11 @@ Hooks.once("init", () => {
           bottomRight: "MINIMAP.SETTINGS.POSITION.BOTTOMRIGHT",
           topLeft: "MINIMAP.SETTINGS.POSITION.TOPLEFT",
           topRight: "MINIMAP.SETTINGS.POSITION.TOPRIGHT"
+        },
+        onChange(value: MapPosition) {
+          const map = getMiniMap();
+          if (!(map instanceof MiniMap)) return;
+          map.position = value;
         }
       });
 
