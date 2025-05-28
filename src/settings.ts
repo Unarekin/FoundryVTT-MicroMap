@@ -1,7 +1,8 @@
 import { getGame, getMiniMap } from "./utils";
 import { log, logError } from "./logging";
 import { MiniMap } from "MiniMap";
-import { MapPosition } from './types';
+import { MapPosition, OverlaySettings } from './types';
+import { OverlaySettingsApplication } from "./applications";
 
 Hooks.once("init", () => {
 
@@ -86,15 +87,32 @@ Hooks.once("init", () => {
         filePicker: "image"
       });
 
-      game.settings.register(__MODULE_ID__, "overlay", {
+      game.settings.registerMenu(__MODULE_ID__, "overlayMenu", {
         name: "MINIMAP.SETTINGS.OVERLAY.NAME",
         hint: "MINIMAP.SETTINGS.OVERLAY.HINT",
-        config: true,
+        label: "MINIMAP.SETTINGS.OVERLAY.BUTTON",
+        restricted: true,
+        icon: "fas fa-frame",
+        type: OverlaySettingsApplication
+      });
+
+      game.settings.register(__MODULE_ID__, "overlaySettings", {
         scope: "world",
-        type: String,
-        default: "",
-        requiresReload: false,
-        filePicker: "image"
+        config: false,
+        type: Object,
+        default: {
+          show: true,
+          file: "",
+          left: 0,
+          right: 0,
+          top: 0,
+          bottom: 0
+        },
+        onChange(settings: OverlaySettings) {
+          const miniMap = getMiniMap();
+          if (!(miniMap instanceof MiniMap)) return;
+          miniMap.setOverlayFromSettings(settings);
+        }
       });
 
       log("Settings registered");

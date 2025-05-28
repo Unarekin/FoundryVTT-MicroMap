@@ -6,3 +6,12 @@ export type MapShape = typeof MapShapes[number];
 
 export const MapPositions = ["bottomLeft", "bottomRight", "topLeft", "topRight"] as const;
 export type MapPosition = typeof MapPositions[number];
+
+export interface OverlaySettings {
+  file: string;
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+  visible: boolean;
+}

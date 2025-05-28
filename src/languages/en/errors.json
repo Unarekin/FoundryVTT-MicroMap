@@ -1,0 +1,7 @@
+{
+  "MINIMAP": {
+    "ERRORS": {
+      "FILENOTFOUND": "File not found: {file}"
+    }
+  }
+}

@@ -1,4 +1,4 @@
-import { MapMode, MapPosition, MapShape } from './types';
+import { MapMode, MapPosition, MapShape, OverlaySettings } from './types';
 import { coerceScene } from './coercion';
 import { logError } from 'logging';
 import { getGame } from 'utils';
@@ -143,19 +143,17 @@ export class MiniMap {
     this.staticSprite.visible = this.mode === "image";
     this.sceneSprite.visible = this.mode === "scene";
 
-    this.overlaySprite.visible = !!this.overlay;
-
     this.staticSprite.width = this.width;
     this.staticSprite.height = this.height;
 
-    this.overlaySprite.width = this.width;
-    this.overlaySprite.height = this.height;
+    this.overlayPlane.width = this.width;
+    this.overlayPlane.height = this.height;
 
     this.sceneSprite.width = this.width;
     this.sceneSprite.height = this.height;
 
     // Set everything to top left of container
-    this.staticSprite.x = this.staticSprite.y = this.overlaySprite.x = this.overlaySprite.y = this.sceneSprite.x = this.sceneSprite.y = 0;
+    this.staticSprite.x = this.staticSprite.y = this.overlayPlane.x = this.overlayPlane.y = this.sceneSprite.x = this.sceneSprite.y = 0;
 
     if (this.container?.parent) {
       // TODO: Account for UI elements
@@ -182,7 +180,7 @@ export class MiniMap {
 
   protected staticSprite: PIXI.Sprite;
   protected sceneSprite: PIXI.Sprite;
-  protected overlaySprite: PIXI.Sprite;
+  protected overlayPlane: PIXI.NineSlicePlane;
 
   private _contextMenu: foundry.applications.ux.ContextMenu<false> | undefined = undefined;
 
@@ -260,6 +258,25 @@ export class MiniMap {
     document.addEventListener("contextmenu", listener);
   }
 
+  public setOverlayFromSettings(settings: OverlaySettings) {
+    if (!settings.file) {
+      this.overlayPlane.visible = false;
+      return;
+    }
+
+    this.overlay = settings.file;
+    const texture = PIXI.Texture.from(settings.file);
+    this.overlayPlane.texture = texture;
+    const { left, right, top, bottom } = settings;
+    this.overlayPlane.leftWidth = left;
+    this.overlayPlane.rightWidth = right;
+    this.overlayPlane.topHeight = top;
+    this.overlayPlane.bottomHeight = bottom;
+
+    this.overlayPlane.visible = settings.visible;
+    this.update();
+  }
+
   constructor() {
 
     this.container.sortableChildren = true;
@@ -271,16 +288,14 @@ export class MiniMap {
     else
       this.staticSprite = new PIXI.Sprite();
 
-    if (this.overlay)
-      this.overlaySprite = PIXI.Sprite.from(this.overlay);
-    else
-      this.overlaySprite = new PIXI.Sprite();
+    const overlayTexture = this.overlay ? PIXI.Texture.from(this.overlay) : PIXI.Texture.from(`modules/${__MODULE_ID__}/assets/transparent.webp`);
+    this.overlayPlane = new PIXI.NineSlicePlane(overlayTexture, 0, 0, 0, 0);
 
     this.sceneSprite = new PIXI.Sprite();
 
     this.container.addChild(this.staticSprite);
     this.container.addChild(this.sceneSprite);
-    this.container.addChild(this.overlaySprite);
+    this.container.addChild(this.overlayPlane);
 
     if (!this.staticSprite.texture.valid)
       this.staticSprite.texture.baseTexture.once("loaded", () => { this.update(); })
@@ -288,8 +303,15 @@ export class MiniMap {
       this.update();
 
     this.container.addEventListener("rightclick", (e: PIXI.FederatedPointerEvent) => {
-      e.preventDefault();
-      void this.showContextMenu(e.clientX, e.clientY);
+      getGame()
+        .then(game => {
+          if (game.user.can("SETTINGS_MODIFY")) {
+            e.preventDefault();
+            return this.showContextMenu(e.clientX, e.clientY);
+          }
+        })
+        .catch((err: Error) => { logError(err); })
+        ;
     });
 
     window.addEventListener("resize", () => { this.update(); })
@@ -301,9 +323,10 @@ export class MiniMap {
         this.visible = !!game.settings.get(__MODULE_ID__, "show");
         this.position = game.settings.get(__MODULE_ID__, "position") as MapPosition;
         this.shape = game.settings.get(__MODULE_ID__, "shape") as MapShape;
-        // this.mask = game.settings.get(__MODULE_ID__, "mask") as string;
-        this.overlay = game.settings.get(__MODULE_ID__, "overlay") as string;
         this.padding = game.settings.get(__MODULE_ID__, "padding") as number;
+
+        const overlaySettings = game.settings.get(__MODULE_ID__, "overlaySettings") as OverlaySettings;
+        this.setOverlayFromSettings(overlaySettings);
       })
       .catch((err: Error) => { logError(err); })
 

@@ -6,8 +6,15 @@
         "NAME": "Image Mask"
       },
       "OVERLAY": {
+        "BORDERS": "Borders",
+        "BOTTOM": "Bottom",
+        "BUTTON": "Configure Overlay",
         "HINT": "An image to overlay atop the minimap.",
-        "NAME": "MiniMap Overlay"
+        "LEFT": "Left",
+        "NAME": "MiniMap Overlay",
+        "RIGHT": "Right",
+        "TOP": "Top",
+        "SHOW": "Show Overlay"
       },
       "PADDING": {
         "HINT": "Space, in pixels, from the edge of the canvas area.",
