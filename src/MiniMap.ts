@@ -9,6 +9,8 @@ export class MiniMap {
   public static readonly DefaultWidth = 300;
   public static readonly DefaultHeight = 200;
 
+  #bgSprite: PIXI.Sprite;
+
   private _mode: MapMode = "image";
   private _scene: Scene | undefined = undefined;
   private _image = `modules/${__MODULE_ID__}/assets/placeholder.webp`;
@@ -19,6 +21,7 @@ export class MiniMap {
   private _height = 200;
   private _padding = 0;
   private _mask = "";
+  private _bgColor = "#000000";
 
   public get mode() { return this._mode; }
   public set mode(val) {
@@ -122,6 +125,15 @@ export class MiniMap {
     }
   }
 
+  public get bgColor() { return this._bgColor; }
+  public set bgColor(val) {
+    if (this.bgColor !== val) {
+      const color = new PIXI.Color(val);
+      this._bgColor = color.toHex();
+      this.update();
+    }
+  }
+
   protected get screenTop() {
     const uiTop = document.getElementById("scene-navigation-inactive");
     if (!(uiTop instanceof HTMLElement)) return 0;
@@ -164,6 +176,10 @@ export class MiniMap {
 
     this.sceneSprite.width = this.width;
     this.sceneSprite.height = this.height;
+
+    this.#bgSprite.tint = this.bgColor;
+    this.#bgSprite.width = this.width;
+    this.#bgSprite.height = this.height;
 
     // Set everything to top left of container
     this.staticSprite.x = this.staticSprite.y = this.overlayPlane.x = this.overlayPlane.y = this.sceneSprite.x = this.sceneSprite.y = 0;
@@ -362,6 +378,7 @@ export class MiniMap {
 
     if (this.staticSprite.mask instanceof PIXI.Sprite && !this.staticSprite.mask.destroyed) this.staticSprite.mask.destroy();
     if (this.sceneSprite.mask instanceof PIXI.Sprite && !this.sceneSprite.mask.destroyed) this.sceneSprite.mask.destroy();
+    if (this.#bgSprite.mask instanceof PIXI.Sprite && !this.#bgSprite.mask.destroyed) this.#bgSprite.mask.destroy();
 
     const sprite = new PIXI.Sprite(texture);
     sprite.width = this.width;
@@ -369,6 +386,7 @@ export class MiniMap {
     this.container.addChild(sprite);
     this.staticSprite.mask = sprite;
     this.sceneSprite.mask = sprite;
+    this.#bgSprite.mask = sprite;
     // this.container.mask = sprite;
   }
 
@@ -388,6 +406,9 @@ export class MiniMap {
 
     this.sceneSprite = new PIXI.Sprite();
 
+    this.#bgSprite = new PIXI.Sprite(PIXI.Texture.WHITE);
+
+    this.container.addChild(this.#bgSprite);
     this.container.addChild(this.staticSprite);
     this.container.addChild(this.sceneSprite);
     this.container.addChild(this.overlayPlane);
@@ -420,6 +441,7 @@ export class MiniMap {
         this.shape = game.settings.get(__MODULE_ID__, "shape") as MapShape;
         this.padding = game.settings.get(__MODULE_ID__, "padding") as number;
         this.mask = game.settings.get(__MODULE_ID__, "mask") as string;
+        this.bgColor = game.settings.get(__MODULE_ID__, "bgColor") as string;
 
         const overlaySettings = game.settings.get(__MODULE_ID__, "overlaySettings") as OverlaySettings;
         this.setOverlayFromSettings(overlaySettings);

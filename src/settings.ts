@@ -45,6 +45,20 @@ Hooks.once("init", () => {
         }
       });
 
+      game.settings.register(__MODULE_ID__, "bgColor", {
+        name: "MINIMAP.SETTINGS.BGCOLOR.NAME",
+        hint: "MINIMAP.SETTINGS.BGCOLOR.HINT",
+        config: true,
+        scope: "world",
+        type: new foundry.data.fields.ColorField(),
+        default: "#000000",
+        onChange(value: string) {
+          const map = getMiniMap();
+          if (!(map instanceof MiniMap)) return;
+          map.bgColor = value;
+        }
+      })
+
       game.settings.register(__MODULE_ID__, "padding", {
         name: "MINIMAP.SETTINGS.PADDING.NAME",
         hint: "MINIMAP.SETTINGS.PADDING.HINT",

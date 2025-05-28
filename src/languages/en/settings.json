@@ -39,6 +39,10 @@
       "SHOW": {
         "HINT": "If enabled, will show the minimap.",
         "NAME": "Show MiniMap"
+      },
+      "BGCOLOR": {
+        "NAME": "Background Color",
+        "HINT": "The background color to use on the minimap"
       }
     }
   }
