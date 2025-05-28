@@ -443,15 +443,14 @@ export class MiniMap {
         this.mask = game.settings.get(__MODULE_ID__, "mask") as string;
         this.bgColor = game.settings.get(__MODULE_ID__, "bgColor") as string;
 
+        this.height = game.settings.get(__MODULE_ID__, "height") as number;
+        this.width = game.settings.get(__MODULE_ID__, "width") as number;
+
         const overlaySettings = game.settings.get(__MODULE_ID__, "overlaySettings") as OverlaySettings;
         this.setOverlayFromSettings(overlaySettings);
       })
       .catch((err: Error) => { logError(err); })
 
-    /*
-        getGame()
-      .then(game => { this.visible = !!game.settings.get(__MODULE_ID__, "show"); })
-      .catch((err: Error) => { logError(err); })
-    */
+    this.update = foundry.utils.debounce(this.update.bind(this), 100);
   }
 }

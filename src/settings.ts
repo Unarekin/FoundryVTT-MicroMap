@@ -74,6 +74,32 @@ Hooks.once("init", () => {
         }
       });
 
+      game.settings.register(__MODULE_ID__, "width", {
+        name: "Width",
+        config: true,
+        scope: "world",
+        type: Number,
+        default: 256,
+        onChange(width: number) {
+          const miniMap = getMiniMap();
+          if (!(miniMap instanceof MiniMap)) return;
+          miniMap.width = width;
+        }
+      });
+
+      game.settings.register(__MODULE_ID__, "height", {
+        name: "Height",
+        config: true,
+        scope: "world",
+        type: Number,
+        default: 256,
+        onChange(height: number) {
+          const miniMap = getMiniMap();
+          if (!(miniMap instanceof MiniMap)) return;
+          miniMap.height = height;
+        }
+      });
+
       game.settings.register(__MODULE_ID__, "shape", {
         name: "MINIMAP.SETTINGS.SHAPE.NAME",
         hint: "MINIMAP.SETTINGS.SHAPE.HINT",
