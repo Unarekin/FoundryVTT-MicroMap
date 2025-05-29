@@ -353,10 +353,17 @@ export class MiniMap {
     const game = await getGame();
     return [
       {
-        name: "MINIMAP.CONTEXTMENU.HIDE",
-        icon: `<i class="fas fa-eye-slash"></i>`,
+        name: "MINIMAP.CONTEXTMENU.SETTINGS",
+        icon: `<i class="fas fa-cogs"></i>`,
         condition: () => game.user.can("SETTINGS_MODIFY"),
-        callback: () => { game.settings.set(__MODULE_ID__, "show", false).catch(logError) }
+        callback: () => {
+          const app = foundry.applications.instances.has("settings-config") ? foundry.applications.instances.get("settings-config") : new foundry.applications.settings.SettingsConfig();
+          if (app instanceof foundry.applications.settings.SettingsConfig) {
+            app.render({ force: true })
+              .then(() => { app.changeTab(__MODULE_ID__, "categories"); })
+              .catch((err: Error) => { logError(err); })
+          }
+        }
       },
       {
         name: "MINIMAP.CONTEXTMENU.FIT",
@@ -371,18 +378,23 @@ export class MiniMap {
         callback: () => { if (game.user.isGM) void synchronizeView(); }
       },
       {
-        name: "MINIMAP.CONTEXTMENU.SETTINGS",
-        icon: `<i class="fas fa-cogs"></i>`,
+        name: "MINIMAP.CONTEXTMENU.LOCKGM",
+        icon: `<i class="fas fa-lock"></i>`,
+        condition: () => game.user.isGM && !game.settings.get(__MODULE_ID__, "lockGMView"),
+        callback: () => { if (game.user.isGM) void game.settings.set(__MODULE_ID__, "lockGMView", true); }
+      },
+      {
+        name: "MINIMAP.CONTEXTMENU.UNLOCKGM",
+        icon: `<i class="fas fa-lock-open"></i>`,
+        condition: () => game.user.isGM && game.settings.get(__MODULE_ID__, "lockGMView") as boolean,
+        callback: () => { if (game.user.isGM) void game.settings.set(__MODULE_ID__, "lockGMView", false); }
+      },
+      {
+        name: "MINIMAP.CONTEXTMENU.HIDE",
+        icon: `<i class="fas fa-eye-slash"></i>`,
         condition: () => game.user.can("SETTINGS_MODIFY"),
-        callback: () => {
-          const app = foundry.applications.instances.has("settings-config") ? foundry.applications.instances.get("settings-config") : new foundry.applications.settings.SettingsConfig();
-          if (app instanceof foundry.applications.settings.SettingsConfig) {
-            app.render({ force: true })
-              .then(() => { app.changeTab(__MODULE_ID__, "categories"); })
-              .catch((err: Error) => { logError(err); })
-          }
-        }
-      }
+        callback: () => { game.settings.set(__MODULE_ID__, "show", false).catch(logError) }
+      },
     ]
   }
 
