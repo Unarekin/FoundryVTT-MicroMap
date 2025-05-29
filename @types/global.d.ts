@@ -4,6 +4,7 @@ declare const __MODULE_ID__: string;
 declare const __MODULE_VERSION__: string;
 
 declare const libWrapper: any;
+declare const socketlib: any;
 
 declare module '*.scss';
 

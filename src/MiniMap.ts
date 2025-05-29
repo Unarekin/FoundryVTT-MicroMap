@@ -3,6 +3,7 @@ import { coerceScene } from './coercion';
 import { logError } from 'logging';
 import { getGame } from 'utils';
 import { SceneRenderer } from './SceneRenderer';
+import { synchronizeView } from 'sockets';
 
 export class MiniMap {
   public readonly container = new PIXI.Container();
@@ -36,18 +37,39 @@ export class MiniMap {
   private _allowPan = true;
   private _allowZoom = true;
 
-  public get allowPan() { return (game!.user!.can("SETTINGS_MODIFY") ?? false) || this._allowPan }
+  public lockGMView = false;
+
+  public get allowPan() {
+    if (this.lockGMView) return game!.user!.isGM;
+    return (game!.user!.can("SETTINGS_MODIFY") ?? false) || this._allowPan
+  }
   public set allowPan(val) {
     if (val !== this._allowPan) {
       this._allowPan = val;
     }
   }
 
-  public get allowZoom() { return (game!.user!.can("SETTINGS_MODIFY") ?? false) || this._allowZoom }
+  public get allowZoom() {
+    if (this.lockGMView) return game!.user!.isGM;
+    return (game!.user!.can("SETTINGS_MODIFY") ?? false) || this._allowZoom
+  }
   public set allowZoom(val) {
     if (val !== this._allowZoom) {
       this._allowZoom = val;
     }
+  }
+
+  public get view(): MapView {
+    return {
+      x: this.panX,
+      y: this.panY,
+      zoom: this.zoom
+    }
+  }
+  public set view(view) {
+    this.panX = view.x;
+    this.panY = view.y;
+    this.zoom = view.zoom;
   }
 
   public get mode() { return this._mode; }
@@ -308,6 +330,8 @@ export class MiniMap {
         this.zoom = maxHeight / height;
       }
     }
+
+    void this.updateViewIfLocked();
   }
 
   protected staticSprite: PIXI.Sprite;
@@ -542,10 +566,19 @@ export class MiniMap {
     e.stopPropagation();
     this.panX += e.movementX;
     this.panY += e.movementY;
+
+    void this.updateViewIfLocked();
+
   }
 
   protected onRightClick(e: PIXI.FederatedPointerEvent) {
     void this.showContextMenu(e.clientX, e.clientY);
+  }
+
+  private async updateViewIfLocked() {
+    const game = await getGame();
+    if (!this.lockGMView || !game.user.isGM) return;
+    await synchronizeView();
   }
 
   public get baseWidth() {
@@ -569,6 +602,7 @@ export class MiniMap {
       e.stopPropagation();
       if (e.deltaY < 0) this.zoom = Math.min(Math.max(this.zoom + this.zoomStep, MiniMap.MinZoom), MiniMap.MaxZoom);
       else if (e.deltaY > 0) this.zoom = Math.min(Math.max(this.zoom - this.zoomStep, MiniMap.MinZoom), MiniMap.MaxZoom);
+      void this.updateViewIfLocked();
     }
   }
 
@@ -640,6 +674,8 @@ export class MiniMap {
 
           this.allowPan = game.settings.get(__MODULE_ID__, "unlockPlayers") as boolean;
           this.allowZoom = game.settings.get(__MODULE_ID__, "unlockPlayers") as boolean;
+
+          this.lockGMView = game.settings.get(__MODULE_ID__, "lockGMView") as boolean;
 
           // Get client settings
           const view: MapView | null = game.settings.get(__MODULE_ID__, "view") as MapView | null;

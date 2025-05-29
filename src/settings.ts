@@ -3,6 +3,7 @@ import { log, logError } from "./logging";
 import { MiniMap } from "MiniMap";
 import { MapPosition, MapShape, OverlaySettings, MapMode } from './types';
 import { OverlaySettingsApplication } from "./applications";
+import { synchronizeView } from "sockets";
 
 Hooks.once("init", () => {
 
@@ -36,6 +37,28 @@ Hooks.once("init", () => {
           if (!(map instanceof MiniMap)) return;
           map.allowPan = value;
           map.allowZoom = value;
+        }
+      });
+
+      game.settings.register(__MODULE_ID__, "lockGMView", {
+        name: "MINIMAP.SETTINGS.LOCKGMVIEW.NAME",
+        hint: "MINIMAP.SETTINGS.LOCKGMVIEW.HINT",
+        config: true,
+        scope: "world",
+        type: Boolean,
+        default: false,
+        requiresReload: false,
+        onChange(value: boolean, data: unknown, user: string) {
+          const map = getMiniMap();
+          if (!(map instanceof MiniMap)) return;
+          map.lockGMView = value;
+          getGame()
+            .then(game => {
+              if (game.user.id === user)
+                void synchronizeView();
+            })
+            .catch((err: Error) => { logError(err); })
+            ;
         }
       })
 

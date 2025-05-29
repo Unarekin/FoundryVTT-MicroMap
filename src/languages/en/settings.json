@@ -8,6 +8,10 @@
       "MODE": {
         "NAME": "MiniMap Image Mode"
       },
+      "LOCKGMVIEW": {
+        "NAME": "Lock To GM View",
+        "HINT": "If enabled, will force players' view to match the GM's."
+      },
       "UNLOCKPLAYERS": {
         "NAME": "Allow Players to Pan/Zoom MiniMap"
       },
