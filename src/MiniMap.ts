@@ -22,7 +22,7 @@ export class MiniMap {
 
   private _mode: MapMode = "image";
   private _scene: Scene | undefined = undefined;
-  private _image = `modules/${__MODULE_ID__}/assets/placeholder.webp`;
+  private _image = `modules/${__MODULE_ID__}/assets/transparent.webp`;
   private _overlay = "";
   private _shape: MapShape = "rectangle";
   private _position: MapPosition = "bottomRight";
