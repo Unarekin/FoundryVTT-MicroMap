@@ -1,10 +1,13 @@
 import { MapMode, MapPosition, MapShape, OverlaySettings } from './types';
 import { coerceScene } from './coercion';
-import { log, logError } from 'logging';
+import { logError } from 'logging';
 import { getGame } from 'utils';
+import { SceneRenderer } from './SceneRenderer';
 
 export class MiniMap {
   public readonly container = new PIXI.Container();
+
+  private _suppressUpdate = false;
 
   public static readonly DefaultWidth = 300;
   public static readonly DefaultHeight = 200;
@@ -14,6 +17,8 @@ export class MiniMap {
 
   #bgSprite: PIXI.Sprite;
   #mapContainer = new PIXI.Container();
+
+  protected readonly sceneRenderer: SceneRenderer
 
   private _mode: MapMode = "image";
   private _scene: Scene | undefined = undefined;
@@ -34,6 +39,8 @@ export class MiniMap {
   public set mode(val) {
     if (this._mode !== val) {
       this._mode = val;
+      if (val === "scene" && this.scene) this.sceneRenderer.active = true;
+      else this.sceneRenderer.active = false;
       this.update();
     }
   }
@@ -43,13 +50,20 @@ export class MiniMap {
     const scene = coerceScene(val);
     if (scene !== this.scene) {
       this._scene = scene;
+      this.sceneRenderer.scene = scene;
+      if (scene && this.mode === "scene") {
+        this.sceneRenderer.active = true;
+        this.resetPosition();
+      } else {
+        this.sceneRenderer.active = false;
+      }
+
       this.update();
     }
   }
 
   public get image() { return this._image; }
   public set image(val) {
-    log("Setting image:", val);
     if (val !== this.image) {
       this._image = val;
 
@@ -198,10 +212,17 @@ export class MiniMap {
     return y - this.height;
   }
 
+  private resetPosition() {
+    this.#mapContainer.scale.set(1, 1);
+    this.#mapContainer.x = -this.#mapContainer.width / 2;
+    this.#mapContainer.y = -this.#mapContainer.height / 2;
+  }
+
   /**
    * Updates the visuals of our minimap in accordance with its settings.
    */
   protected update() {
+    if (this._suppressUpdate) return;
     this.staticSprite.visible = this.mode === "image" && !!this.image;
     this.sceneSprite.visible = this.mode === "scene" && !!this.scene;
 
@@ -473,6 +494,7 @@ export class MiniMap {
   }
 
   protected onWheel(e: WheelEvent) {
+    if (!this.visible) return;
     const bounds = this.container.getBounds();
     if (bounds.contains(e.clientX, e.clientY)) {
       e.stopPropagation();
@@ -496,6 +518,7 @@ export class MiniMap {
     this.overlayPlane = new PIXI.NineSlicePlane(overlayTexture, 0, 0, 0, 0);
 
     this.sceneSprite = new PIXI.Sprite();
+    this.sceneSprite.interactiveChildren = false;
 
     this.#bgSprite = new PIXI.Sprite(PIXI.Texture.WHITE);
 
@@ -504,6 +527,8 @@ export class MiniMap {
     this.#mapContainer.addChild(this.sceneSprite);
     this.container.addChild(this.#mapContainer);
     this.container.addChild(this.overlayPlane);
+
+    this.sceneRenderer = new SceneRenderer(this.sceneSprite);
 
     if (!this.staticSprite.texture.valid)
       this.staticSprite.texture.baseTexture.once("loaded", () => { this.update(); })
@@ -520,7 +545,7 @@ export class MiniMap {
     this.container.addEventListener("pointerupoutside", e => { this.onDragEnd(e); });
     // this.container.addEventListener("wheel", e => { this.onWheel(e); })
     const board = document.getElementById("board");
-    if (board instanceof HTMLElement) board.addEventListener("wheel", e => { this.onWheel(e); })
+    if (board instanceof HTMLElement) board.addEventListener("wheel", e => { this.onWheel(e); }, true)
 
     window.addEventListener("resize", () => { this.update(); })
     Hooks.on("collapseSidebar", () => { setTimeout(() => { this.update(); }, 500) });
@@ -528,23 +553,32 @@ export class MiniMap {
 
     getGame()
       .then(game => {
-        this.visible = !!game.settings.get(__MODULE_ID__, "show");
-        this.position = game.settings.get(__MODULE_ID__, "position") as MapPosition;
-        this.shape = game.settings.get(__MODULE_ID__, "shape") as MapShape;
-        this.padding = game.settings.get(__MODULE_ID__, "padding") as number;
-        this.mask = game.settings.get(__MODULE_ID__, "mask") as string;
-        this.bgColor = game.settings.get(__MODULE_ID__, "bgColor") as string;
+        try {
+          this._suppressUpdate = true;
+          this.visible = !!game.settings.get(__MODULE_ID__, "show");
+          this.position = game.settings.get(__MODULE_ID__, "position") as MapPosition;
+          this.shape = game.settings.get(__MODULE_ID__, "shape") as MapShape;
+          this.padding = game.settings.get(__MODULE_ID__, "padding") as number;
+          this.mask = game.settings.get(__MODULE_ID__, "mask") as string;
+          this.bgColor = game.settings.get(__MODULE_ID__, "bgColor") as string;
 
-        this.height = game.settings.get(__MODULE_ID__, "height") as number;
-        this.width = game.settings.get(__MODULE_ID__, "width") as number;
+          this.height = game.settings.get(__MODULE_ID__, "height") as number;
+          this.width = game.settings.get(__MODULE_ID__, "width") as number;
 
-        this.mode = game.settings.get(__MODULE_ID__, "mode") as MapMode;
-        this.image = game.settings.get(__MODULE_ID__, "image") as string;
-        log("Scene:", game.settings.get(__MODULE_ID__, "scene"));
+          this.mode = game.settings.get(__MODULE_ID__, "mode") as MapMode;
+          this.image = game.settings.get(__MODULE_ID__, "image") as string;
+          this.scene = game.settings.get(__MODULE_ID__, "scene") as string;
 
-        const overlaySettings = game.settings.get(__MODULE_ID__, "overlaySettings") as OverlaySettings;
-        this.setOverlayFromSettings(overlaySettings);
-        this.setMask(this.shape);
+          const overlaySettings = game.settings.get(__MODULE_ID__, "overlaySettings") as OverlaySettings;
+          this.setOverlayFromSettings(overlaySettings);
+          this.setMask(this.shape);
+        } catch (err) {
+          logError(err as Error);
+        } finally {
+          this._suppressUpdate = false;
+          this.update();
+          // if (this.scene && this.mode === "scene") this.sceneRenderer.active = true;
+        }
       })
       .catch((err: Error) => { logError(err); })
 

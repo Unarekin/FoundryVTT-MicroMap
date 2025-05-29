@@ -1,3 +1,5 @@
 {
-  "MINIMAP": {}
+  "MINIMAP": {
+    "INITIALIZING": "Initializing minimap, this may take a moment..."
+  }
 }

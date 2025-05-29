@@ -63,14 +63,16 @@ Hooks.once("init", () => {
         scope: "world",
         type: new foundry.data.fields.ForeignDocumentField(Scene, {
           nullable: true,
-          blank: true
+          idOnly: true
         }),
         default: null,
         requiresReload: false,
-        onChange(value: string) {
-          log("Scene:", value);
+        onChange(id: string) {
+          const map = getMiniMap();
+          if (!(map instanceof MiniMap)) return;
+          map.scene = id;
         }
-      })
+      });
 
       game.settings.register(__MODULE_ID__, "position", {
         name: "MINIMAP.SETTINGS.POSITION.NAME",
