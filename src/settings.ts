@@ -1,4 +1,4 @@
-import { getGame, getMiniMap } from "./utils";
+import { getGame, getMiniMap, localize } from "./utils";
 import { log, logError } from "./logging";
 import { MiniMap } from "MiniMap";
 import { MapPosition, MapShape, OverlaySettings } from './types';
@@ -170,3 +170,57 @@ Hooks.once("init", () => {
     .catch((err: Error) => { logError(err); });
 })
 
+Hooks.once("libWrapper.Ready", () => {
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+  libWrapper.register(__MODULE_ID__, "foundry.applications.settings.SettingsConfig.prototype._onRender", async function (this: foundry.applications.settings.SettingsConfig, wrapped: Function, ...args: unknown[]) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
+    const onRender = wrapped(...args);
+
+    const game = await getGame();
+
+    const shape = this.element.querySelector(`[name="miniature-map.shape"]`);
+    const mask = this.element.querySelector(`.form-group:has([name="miniature-map.mask"])`);
+
+    if (mask instanceof HTMLElement && shape instanceof HTMLSelectElement) {
+      mask.style.display = shape.value === "mask" ? "flex" : "none";
+      shape.addEventListener("change", () => { mask.style.display = shape.value === "mask" ? "flex" : "none"; });
+    }
+
+    const width = this.element.querySelector(`.form-group:has([name="miniature-map.width"])`);
+    if (width instanceof HTMLElement) width.remove();
+
+    const height = this.element.querySelector(`.form-group:has([name="miniature-map.height"])`);
+    if (height instanceof HTMLElement) height.remove();
+
+    const pos = this.element.querySelector(`.form-group:has([name="miniature-map.position"])`);
+    if (pos instanceof HTMLElement) {
+      // Inject formatted width/height
+      const elem = document.createElement(`div`);
+      elem.classList.add("form-group");
+      elem.classList.add("slim");
+
+      const width = game.settings.get(__MODULE_ID__, "width") as number;
+      const height = game.settings.get(__MODULE_ID__, "height") as number;
+
+      elem.innerHTML = `<label>${localize("TILE.Dimensions")}</label>
+  <div class="form-fields">
+    <label for="settings-config-${__MODULE_ID__}.width">${localize("Width")}</label>
+    <div class="form-fields">
+      <input type="number" name="${__MODULE_ID__}.width" id="settings-config-${__MODULE_ID__}.width" value="${width.toString()}" step="any">
+    </div>
+    <label for="settings-config-${__MODULE_ID__}.height">${localize("Height")}</label>
+    <div class="form-fields">
+      <input type="number" name="${__MODULE_ID__}.height" id="settings-config-${__MODULE_ID__}.height" value="${height.toString()}" step="any">
+    </div>
+  </div>
+`
+
+      pos.after(elem);
+    }
+
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return onRender;
+  });
+});
