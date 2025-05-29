@@ -5,6 +5,9 @@
         "HINT": "An image to use as a mask for shaping the minimap.",
         "NAME": "Image Mask"
       },
+      "MODE": {
+        "NAME": "MiniMap Image Mode"
+      },
       "OVERLAY": {
         "BORDERS": "Borders",
         "BOTTOM": "Bottom",

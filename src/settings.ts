@@ -1,7 +1,7 @@
 import { getGame, getMiniMap, localize } from "./utils";
 import { log, logError } from "./logging";
 import { MiniMap } from "MiniMap";
-import { MapPosition, MapShape, OverlaySettings } from './types';
+import { MapPosition, MapShape, OverlaySettings, MapMode } from './types';
 import { OverlaySettingsApplication } from "./applications";
 
 Hooks.once("init", () => {
@@ -23,6 +23,54 @@ Hooks.once("init", () => {
           map.visible = value;
         }
       });
+
+      game.settings.register(__MODULE_ID__, "mode", {
+        name: "MINIMAP.SETTINGS.MODE.NAME",
+        config: true,
+        scope: "world",
+        type: String,
+        default: "image",
+        requiresReload: false,
+        choices: {
+          "image": "Image",
+          "scene": "DOCUMENT.Scene"
+        },
+        onChange(value: MapMode) {
+          const map = getMiniMap();
+          if (!(map instanceof MiniMap)) return;
+          map.mode = value;
+        }
+      });
+
+      game.settings.register(__MODULE_ID__, "image", {
+        name: "Image",
+        config: true,
+        scope: "world",
+        type: String,
+        default: "",
+        requiresReload: false,
+        filePicker: "image",
+        onChange(value: string) {
+          const map = getMiniMap();
+          if (!(map instanceof MiniMap)) return;
+          map.image = value;
+        }
+      });
+
+      game.settings.register(__MODULE_ID__, "scene", {
+        name: "DOCUMENT.Scene",
+        config: true,
+        scope: "world",
+        type: new foundry.data.fields.ForeignDocumentField(Scene, {
+          nullable: true,
+          blank: true
+        }),
+        default: null,
+        requiresReload: false,
+        onChange(value: string) {
+          log("Scene:", value);
+        }
+      })
 
       game.settings.register(__MODULE_ID__, "position", {
         name: "MINIMAP.SETTINGS.POSITION.NAME",
@@ -67,6 +115,7 @@ Hooks.once("init", () => {
         type: Number,
         default: 0,
         requiresReload: false,
+        required: true,
         onChange(value: number) {
           const map = getMiniMap();
           if (!(map instanceof MiniMap)) return;
@@ -80,6 +129,7 @@ Hooks.once("init", () => {
         scope: "world",
         type: Number,
         default: 256,
+        required: true,
         onChange(width: number) {
           const miniMap = getMiniMap();
           if (!(miniMap instanceof MiniMap)) return;
@@ -93,6 +143,7 @@ Hooks.once("init", () => {
         scope: "world",
         type: Number,
         default: 256,
+        required: true,
         onChange(height: number) {
           const miniMap = getMiniMap();
           if (!(miniMap instanceof MiniMap)) return;
@@ -165,6 +216,7 @@ Hooks.once("init", () => {
         }
       });
 
+
       log("Settings registered");
     })
     .catch((err: Error) => { logError(err); });
@@ -179,21 +231,21 @@ Hooks.once("libWrapper.Ready", () => {
 
     const game = await getGame();
 
-    const shape = this.element.querySelector(`[name="miniature-map.shape"]`);
-    const mask = this.element.querySelector(`.form-group:has([name="miniature-map.mask"])`);
+    const shape = this.element.querySelector(`[name="${__MODULE_ID__}.shape"]`);
+    const mask = this.element.querySelector(`.form-group:has([name="${__MODULE_ID__}.mask"])`);
 
     if (mask instanceof HTMLElement && shape instanceof HTMLSelectElement) {
       mask.style.display = shape.value === "mask" ? "flex" : "none";
       shape.addEventListener("change", () => { mask.style.display = shape.value === "mask" ? "flex" : "none"; });
     }
 
-    const width = this.element.querySelector(`.form-group:has([name="miniature-map.width"])`);
+    const width = this.element.querySelector(`.form-group:has([name="${__MODULE_ID__}.width"])`);
     if (width instanceof HTMLElement) width.remove();
 
-    const height = this.element.querySelector(`.form-group:has([name="miniature-map.height"])`);
+    const height = this.element.querySelector(`.form-group:has([name="${__MODULE_ID__}.height"])`);
     if (height instanceof HTMLElement) height.remove();
 
-    const pos = this.element.querySelector(`.form-group:has([name="miniature-map.position"])`);
+    const pos = this.element.querySelector(`.form-group:has([name="${__MODULE_ID__}.position"])`);
     if (pos instanceof HTMLElement) {
       // Inject formatted width/height
       const elem = document.createElement(`div`);
@@ -219,6 +271,29 @@ Hooks.once("libWrapper.Ready", () => {
       pos.after(elem);
     }
 
+    const scene = this.element.querySelector(`.form-group:has([name="${__MODULE_ID__}.scene"])`);
+    const image = this.element.querySelector(`.form-group:has([name="${__MODULE_ID__}.image"])`);
+
+    const mode = game.settings.get(__MODULE_ID__, "mode") as MapMode;
+    if (scene instanceof HTMLElement) scene.style.display = mode === "scene" ? "flex" : "none";
+    if (image instanceof HTMLElement) image.style.display = mode === "image" ? "flex" : "none";
+
+    const modeSelect = this.element.querySelector(`[name="${__MODULE_ID__}.mode"]`);
+    log("Select:", modeSelect);
+    if (modeSelect instanceof HTMLSelectElement) {
+      modeSelect.addEventListener("change", () => {
+        if (scene instanceof HTMLElement) {
+          scene.style.display = modeSelect.value === "scene" ? "flex" : "none";
+          if (modeSelect.value === "scene") scene.setAttribute("required", "true");
+          else scene.removeAttribute("required");
+        }
+        if (image instanceof HTMLElement) {
+          image.style.display = modeSelect.value === "image" ? "flex" : "none";
+          if (modeSelect.value === "image") image.setAttribute("required", "true");
+          else image.removeAttribute("required");
+        }
+      })
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return onRender;
