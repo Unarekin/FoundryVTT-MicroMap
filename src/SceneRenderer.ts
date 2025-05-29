@@ -1,4 +1,4 @@
-import { logError } from 'logging';
+import { log, logError } from 'logging';
 import { coerceScene } from './coercion';
 
 export class SceneRenderer {
@@ -156,15 +156,17 @@ export class SceneRenderer {
 
       this.sprites[doc.uuid] = sprite;
       this.container.addChild(sprite);
-      this.documentUpdated(doc);
+      this.documentUpdated(doc, {});
     } catch (err) {
       logError(err as Error);
     }
   }
 
-  private documentUpdated(doc: TileDocument | TokenDocument) {
+  private documentUpdated(doc: TileDocument | TokenDocument, delta: Partial<TileDocument> | Partial<TokenDocument>) {
     try {
       if (!this.shouldProcessDocument(doc)) return;
+
+      log("Updating:", doc.x, doc.y);
 
       const sprite = this.getSprite(doc);
       if (!sprite) return;
@@ -172,8 +174,8 @@ export class SceneRenderer {
       sprite.tint = doc.texture.tint ?? "#FFFFFF";
       sprite.rotation = doc.texture.rotation;
 
-      sprite.x = doc.x;
-      sprite.y = doc.y;
+      sprite.x = (typeof delta.x === "number" ? delta.x : doc.x) - this.scene!.dimensions.sceneX;
+      sprite.y = (typeof delta.y === "number" ? delta.y : doc.y) - this.scene!.dimensions.sceneY;
 
       const gridSize = this.scene!.grid.size;   // Our shoudlProcessDocument call earlier ensures scene is not null
 
@@ -209,10 +211,10 @@ export class SceneRenderer {
     Hooks.on("sceneUpdate", (scene: Scene) => { if (this.active && scene === this.scene) this.sceneUpdated(); });
     Hooks.on("createToken", (token: TokenDocument) => { this.documentAdded(token); });
     Hooks.on("deleteToken", (token: TokenDocument) => { this.documentRemoved(token); });
-    Hooks.on("updateToken", (token: TokenDocument) => { this.documentUpdated(token); });
+    Hooks.on("updateToken", (token: TokenDocument, delta: Partial<TokenDocument>) => { this.documentUpdated(token, delta); });
 
     Hooks.on("createTile", (tile: TileDocument) => { this.documentAdded(tile); });
     Hooks.on("deleteTile", (tile: TileDocument) => { this.documentRemoved(tile); });
-    Hooks.on("updateTile", (tile: TileDocument) => { this.documentUpdated(tile); });
+    Hooks.on("updateTile", (tile: TileDocument, delta: Partial<TileDocument>) => { this.documentUpdated(tile, delta); });
   }
 }

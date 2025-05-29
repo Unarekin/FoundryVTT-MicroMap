@@ -494,6 +494,7 @@ export class MiniMap {
   }
 
   protected onWheel(e: WheelEvent) {
+    if (!this.visible) return;
     const bounds = this.container.getBounds();
     if (bounds.contains(e.clientX, e.clientY)) {
       e.stopPropagation();
