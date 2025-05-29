@@ -545,6 +545,7 @@ export class MiniMap {
     // if (this.#bgSprite.mask instanceof PIXI.Sprite && !this.#bgSprite.mask.destroyed) this.#bgSprite.mask.destroy();
 
     const sprite = new PIXI.Sprite(texture);
+    sprite.name = "Mask";
     sprite.width = this.width;
     sprite.height = this.height;
     this.container.addChild(sprite);
@@ -625,7 +626,7 @@ export class MiniMap {
   }
 
   constructor() {
-
+    this.container.name = "MiniMap Container";
     this.container.sortableChildren = true;
     this.container.interactive = true;
     this.container.eventMode = "dynamic";
@@ -635,19 +636,26 @@ export class MiniMap {
     else
       this.staticSprite = new PIXI.Sprite();
 
+    this.staticSprite.name = "Static Image Sprite";
+
     const overlayTexture = this.overlay ? PIXI.Texture.from(this.overlay) : PIXI.Texture.from(`modules/${__MODULE_ID__}/assets/transparent.webp`);
     this.overlayPlane = new PIXI.NineSlicePlane(overlayTexture, 0, 0, 0, 0);
+    this.overlayPlane.name = "Overlay Plane";
 
     this.sceneSprite = new PIXI.Sprite();
     this.sceneSprite.interactiveChildren = false;
+    this.sceneSprite.name = "Scene Sprite";
 
     this.#bgSprite = new PIXI.Sprite(PIXI.Texture.WHITE);
+    this.#bgSprite.name = "Background Sprite";
 
     this.container.addChild(this.#bgSprite);
     this.#mapContainer.addChild(this.staticSprite);
     this.#mapContainer.addChild(this.sceneSprite);
     this.container.addChild(this.#mapContainer);
     this.container.addChild(this.overlayPlane);
+
+    this.#mapContainer.name = "Internal Container";
 
     this.sceneRenderer = new SceneRenderer(this.sceneSprite);
 

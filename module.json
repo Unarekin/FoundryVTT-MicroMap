@@ -21,14 +21,6 @@
     "systems": [],
     "requires": [
       {
-        "id": "lib-wrapper",
-        "type": "module",
-        "compatibility": {
-          "minimum": "1.0.0.0",
-          "verified": "1.13.2.0"
-        }
-      },
-      {
         "id": "socketlib",
         "type": "module",
         "manifest": "https://github.com/farling42/foundryvtt-socketlib/releases/latest/download/module.json"

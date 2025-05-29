@@ -70,6 +70,7 @@ export class SceneRenderer {
     }
     this.bgColorSprite.width = this.scene.width!;
     this.bgColorSprite.height = this.scene.height!;
+    this.bgColorSprite.zIndex = -20000;
   }
 
   private drawBackgroundImage() {
@@ -85,6 +86,7 @@ export class SceneRenderer {
       this.bgImageSprite.height = this.scene.height!;
 
       this.bgImageSprite.visible = true;
+      this.bgImageSprite.zIndex = -10000;
     } else {
       this.bgImageSprite.visible = false;
     }
@@ -103,6 +105,7 @@ export class SceneRenderer {
       this.fgImageSprite.height = this.scene.height!;
 
       this.fgImageSprite.visible = true;
+      this.fgImageSprite.zIndex = 10000;
     } else {
       this.fgImageSprite.visible = false;
     }
@@ -120,7 +123,6 @@ export class SceneRenderer {
   }
 
   private initializeScene() {
-    const notification = ui.notifications?.info("MINIMAP.INITIALIZING", { console: false, localize: true, permanent: true });
     try {
       if (!this.scene) return;
       if (!this.active) return;
@@ -133,14 +135,13 @@ export class SceneRenderer {
         delete this.sprites[uuid];
       });
 
-      this.sceneUpdated();
       // Add tokens and tiles
       this.scene.tokens.forEach(doc => { this.documentAdded(doc); });
       this.scene.tiles.forEach(doc => { this.documentAdded(doc); });
+
+      this.sceneUpdated();
     } catch (err) {
       logError(err as Error);
-    } finally {
-      if (notification?.remove) notification.remove();
     }
   }
 
@@ -208,6 +209,10 @@ export class SceneRenderer {
     this.bgColorSprite = new PIXI.Sprite();
     this.fgImageSprite = new PIXI.Sprite();
     this.bgImageSprite = new PIXI.Sprite();
+
+    this.bgColorSprite.name = "Scene BG Color";
+    this.fgImageSprite.name = "Scene FG Image";
+    this.bgImageSprite.name = "Scene BG Image";
 
     this.container.addChild(this.bgColorSprite);
     this.container.addChild(this.bgImageSprite);

@@ -88,6 +88,7 @@ Hooks.once("init", () => {
         default: "",
         requiresReload: false,
         filePicker: "image",
+        required: false,
         onChange(value: string) {
           const map = getMiniMap();
           if (!(map instanceof MiniMap)) return;
@@ -101,7 +102,8 @@ Hooks.once("init", () => {
         scope: "world",
         type: new foundry.data.fields.ForeignDocumentField(Scene, {
           nullable: true,
-          idOnly: true
+          idOnly: true,
+          blank: true
         }),
         default: null,
         requiresReload: false,
@@ -169,6 +171,8 @@ Hooks.once("init", () => {
         scope: "world",
         type: Number,
         default: 256,
+        min: 0,
+        step: 1,
         required: true,
         onChange(width: number) {
           const miniMap = getMiniMap();
@@ -183,6 +187,8 @@ Hooks.once("init", () => {
         scope: "world",
         type: Number,
         default: 256,
+        min: 0,
+        step: 1,
         required: true,
         onChange(height: number) {
           const miniMap = getMiniMap();
@@ -271,79 +277,63 @@ Hooks.once("init", () => {
     .catch((err: Error) => { logError(err); });
 })
 
-Hooks.once("libWrapper.Ready", () => {
+Hooks.on("renderSettingsConfig", async (config: foundry.applications.settings.SettingsConfig, elem: HTMLElement | JQuery<HTMLElement>) => {
+  const element = elem instanceof HTMLElement ? elem : elem[0];
+  const game = await getGame();
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-  libWrapper.register(__MODULE_ID__, "foundry.applications.settings.SettingsConfig.prototype._onRender", async function (this: foundry.applications.settings.SettingsConfig, wrapped: Function, ...args: unknown[]) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
-    const onRender = wrapped(...args);
+  const shape = element.querySelector(`[name="${__MODULE_ID__}.shape"]`);
+  const mask = element.querySelector(`.form-group:has([name="${__MODULE_ID__}.mask"])`);
 
-    const game = await getGame();
+  // Show/hide image mask selection based on shape
+  if (mask instanceof HTMLElement && shape instanceof HTMLSelectElement) {
+    mask.style.display = shape.value === "mask" ? "flex" : "none";
+    shape.addEventListener("change", () => { mask.style.display = shape.value === "mask" ? "flex" : "none"; });
+  }
 
-    const shape = this.element.querySelector(`[name="${__MODULE_ID__}.shape"]`);
-    const mask = this.element.querySelector(`.form-group:has([name="${__MODULE_ID__}.mask"])`);
+  // Show/hide scene or image based on mode
 
-    if (mask instanceof HTMLElement && shape instanceof HTMLSelectElement) {
-      mask.style.display = shape.value === "mask" ? "flex" : "none";
-      shape.addEventListener("change", () => { mask.style.display = shape.value === "mask" ? "flex" : "none"; });
-    }
+  const scene = element.querySelector(`.form-group:has([name="${__MODULE_ID__}.scene"])`);
+  const image = element.querySelector(`.form-group:has([name="${__MODULE_ID__}.image"])`);
 
-    const width = this.element.querySelector(`.form-group:has([name="${__MODULE_ID__}.width"])`);
-    if (width instanceof HTMLElement) width.remove();
+  const mode = game.settings.get(__MODULE_ID__, "mode") as MapMode;
+  if (scene instanceof HTMLElement) scene.style.display = mode === "scene" ? "flex" : "none";
+  if (image instanceof HTMLElement) image.style.display = mode === "image" ? "flex" : "none";
 
-    const height = this.element.querySelector(`.form-group:has([name="${__MODULE_ID__}.height"])`);
-    if (height instanceof HTMLElement) height.remove();
+  const modeSelect = element.querySelector(`[name="${__MODULE_ID__}.mode"]`);
+  if (modeSelect instanceof HTMLSelectElement) {
+    modeSelect.addEventListener("change", () => {
+      if (scene instanceof HTMLElement) scene.style.display = modeSelect.value === "scene" ? "flex" : "none";
+      if (image instanceof HTMLElement) image.style.display = modeSelect.value === "image" ? "flex" : "none";
+    });
+  }
 
-    const pos = this.element.querySelector(`.form-group:has([name="${__MODULE_ID__}.position"])`);
-    if (pos instanceof HTMLElement) {
-      // Inject formatted width/height
-      const elem = document.createElement(`div`);
-      elem.classList.add("form-group");
-      elem.classList.add("slim");
 
-      const width = game.settings.get(__MODULE_ID__, "width") as number;
-      const height = game.settings.get(__MODULE_ID__, "height") as number;
+  // Remove pre-rendered width and height fields
+  const width = element.querySelector(`.form-group:has([name="${__MODULE_ID__}.width"])`);
+  if (width instanceof HTMLElement) width.remove();
+  const height = element.querySelector(`.form-group:has([name="${__MODULE_ID__}.height"])`);
+  if (height instanceof HTMLElement) height.remove();
 
-      elem.innerHTML = `<label>${localize("TILE.Dimensions")}</label>
+  // We will inject a new form group after the position element
+  const pos = element.querySelector(`.form-group:has([name="${__MODULE_ID__}.position"])`);
+  if (pos instanceof HTMLElement) {
+    const dimensions = document.createElement("div");
+    dimensions.classList.add("form-group");
+    dimensions.classList.add("slim");
+
+    const widthField = new foundry.data.fields.NumberField(game.settings.settings.get(`${__MODULE_ID__}.width`));
+    const heightField = new foundry.data.fields.NumberField(game.settings.settings.get(`${__MODULE_ID__}.height`));
+
+    const widthElem = widthField.toFormGroup({ label: "Width", localize: true }, { value: game.settings.get(__MODULE_ID__, "width") as number });
+    const heightElem = heightField.toFormGroup({ label: "Height", localize: true }, { value: game.settings.get(__MODULE_ID__, "height") as number });
+
+    dimensions.innerHTML = `<label>${localize("TOKEN.Dimensions")}</label>
   <div class="form-fields">
-    <label for="settings-config-${__MODULE_ID__}.width">${localize("Width")}</label>
-    <div class="form-fields">
-      <input type="number" name="${__MODULE_ID__}.width" id="settings-config-${__MODULE_ID__}.width" value="${width.toString()}" step="any">
-    </div>
-    <label for="settings-config-${__MODULE_ID__}.height">${localize("Height")}</label>
-    <div class="form-fields">
-      <input type="number" name="${__MODULE_ID__}.height" id="settings-config-${__MODULE_ID__}.height" value="${height.toString()}" step="any">
-    </div>
-  </div>
-`
+    ${widthElem.innerHTML}
+    ${heightElem.innerHTML}
+  </div>`;
 
-      pos.after(elem);
-    }
+    pos.after(dimensions);
+  }
 
-    const scene = this.element.querySelector(`.form-group:has([name="${__MODULE_ID__}.scene"])`);
-    const image = this.element.querySelector(`.form-group:has([name="${__MODULE_ID__}.image"])`);
-
-    const mode = game.settings.get(__MODULE_ID__, "mode") as MapMode;
-    if (scene instanceof HTMLElement) scene.style.display = mode === "scene" ? "flex" : "none";
-    if (image instanceof HTMLElement) image.style.display = mode === "image" ? "flex" : "none";
-
-    const modeSelect = this.element.querySelector(`[name="${__MODULE_ID__}.mode"]`);
-    if (modeSelect instanceof HTMLSelectElement) {
-      modeSelect.addEventListener("change", () => {
-        if (scene instanceof HTMLElement) {
-          scene.style.display = modeSelect.value === "scene" ? "flex" : "none";
-          if (modeSelect.value === "scene") scene.setAttribute("required", "true");
-          else scene.removeAttribute("required");
-        }
-        if (image instanceof HTMLElement) {
-          image.style.display = modeSelect.value === "image" ? "flex" : "none";
-          if (modeSelect.value === "image") image.setAttribute("required", "true");
-          else image.removeAttribute("required");
-        }
-      })
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return onRender;
-  });
 });
