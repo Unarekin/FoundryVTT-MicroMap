@@ -24,6 +24,21 @@ Hooks.once("init", () => {
         }
       });
 
+      game.settings.register(__MODULE_ID__, "unlockPlayers", {
+        name: "MINIMAP.SETTINGS.UNLOCKPLAYERS.NAME",
+        config: true,
+        scope: "world",
+        type: Boolean,
+        default: true,
+        requiresReload: false,
+        onChange(value: boolean) {
+          const map = getMiniMap();
+          if (!(map instanceof MiniMap)) return;
+          map.allowPan = value;
+          map.allowZoom = value;
+        }
+      })
+
       game.settings.register(__MODULE_ID__, "mode", {
         name: "MINIMAP.SETTINGS.MODE.NAME",
         config: true,

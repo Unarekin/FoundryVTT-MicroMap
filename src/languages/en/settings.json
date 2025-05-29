@@ -8,6 +8,9 @@
       "MODE": {
         "NAME": "MiniMap Image Mode"
       },
+      "UNLOCKPLAYERS": {
+        "NAME": "Allow Players to Pan/Zoom MiniMap"
+      },
       "OVERLAY": {
         "BORDERS": "Borders",
         "BOTTOM": "Bottom",

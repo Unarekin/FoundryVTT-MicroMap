@@ -33,6 +33,22 @@ export class MiniMap {
   private _panX = 0;
   private _panY = 0;
   private _zoom = 1;
+  private _allowPan = true;
+  private _allowZoom = true;
+
+  public get allowPan() { return (game!.user!.can("SETTINGS_MODIFY") ?? false) || this._allowPan }
+  public set allowPan(val) {
+    if (val !== this._allowPan) {
+      this._allowPan = val;
+    }
+  }
+
+  public get allowZoom() { return (game!.user!.can("SETTINGS_MODIFY") ?? false) || this._allowZoom }
+  public set allowZoom(val) {
+    if (val !== this._allowZoom) {
+      this._allowZoom = val;
+    }
+  }
 
   public get mode() { return this._mode; }
   public set mode(val) {
@@ -321,6 +337,7 @@ export class MiniMap {
       {
         name: "MINIMAP.CONTEXTMENU.FIT",
         icon: `<i class="fas fa-frame"></i>`,
+        condition: () => this.allowPan && this.allowZoom,
         callback: () => { this.fitMapView(); }
       },
       {
@@ -500,6 +517,7 @@ export class MiniMap {
   #dragListener: ((e: PIXI.FederatedPointerEvent) => void) | null = null;
 
   protected onDragStart(e: PIXI.FederatedPointerEvent) {
+    if (!this.allowPan) return;
     if (!canvas?.app?.stage) return;
     if (this.#dragListener) canvas.app.stage.off("pointermove", this.#dragListener);
     this.#dragListener = this.onDragMove.bind(this);
@@ -519,6 +537,7 @@ export class MiniMap {
   }
 
   protected onDragMove(e: PIXI.FederatedPointerEvent) {
+    if (!this.allowPan) return;
     e.preventDefault();
     e.stopPropagation();
     this.panX += e.movementX;
@@ -544,7 +563,7 @@ export class MiniMap {
   public readonly zoomStep = .025;
 
   protected onWheel(e: WheelEvent) {
-    if (!this.visible) return;
+    if (!this.visible || !this.allowZoom) return;
     const bounds = this.container.getBounds();
     if (bounds.contains(e.clientX, e.clientY)) {
       e.stopPropagation();
@@ -618,6 +637,9 @@ export class MiniMap {
           this.mode = game.settings.get(__MODULE_ID__, "mode") as MapMode;
           this.image = game.settings.get(__MODULE_ID__, "image") as string;
           this.scene = game.settings.get(__MODULE_ID__, "scene") as string;
+
+          this.allowPan = game.settings.get(__MODULE_ID__, "unlockPlayers") as boolean;
+          this.allowZoom = game.settings.get(__MODULE_ID__, "unlockPlayers") as boolean;
 
           // Get client settings
           const view: MapView | null = game.settings.get(__MODULE_ID__, "view") as MapView | null;
