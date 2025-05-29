@@ -15,3 +15,9 @@ export interface OverlaySettings {
   right: number;
   visible: boolean;
 }
+
+export interface MapView {
+  x: number,
+  y: number,
+  zoom: number
+}

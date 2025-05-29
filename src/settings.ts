@@ -219,6 +219,15 @@ Hooks.once("init", () => {
       });
 
 
+
+      game.settings.register(__MODULE_ID__, "view", {
+        scope: "client",
+        config: false,
+        type: Object,
+        default: { x: 0, y: 0, zoom: 1 }
+      });
+
+
       log("Settings registered");
     })
     .catch((err: Error) => { logError(err); });
@@ -281,7 +290,6 @@ Hooks.once("libWrapper.Ready", () => {
     if (image instanceof HTMLElement) image.style.display = mode === "image" ? "flex" : "none";
 
     const modeSelect = this.element.querySelector(`[name="${__MODULE_ID__}.mode"]`);
-    log("Select:", modeSelect);
     if (modeSelect instanceof HTMLSelectElement) {
       modeSelect.addEventListener("change", () => {
         if (scene instanceof HTMLElement) {

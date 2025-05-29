@@ -1,4 +1,4 @@
-import { MapMode, MapPosition, MapShape, OverlaySettings } from './types';
+import { MapMode, MapPosition, MapShape, MapView, OverlaySettings } from './types';
 import { coerceScene } from './coercion';
 import { logError } from 'logging';
 import { getGame } from 'utils';
@@ -40,6 +40,7 @@ export class MiniMap {
       this._mode = val;
       if (val === "scene" && this.scene) this.sceneRenderer.active = true;
       else this.sceneRenderer.active = false;
+
       this.update();
     }
   }
@@ -164,6 +165,7 @@ export class MiniMap {
   public set panX(val) {
     if (val !== this.panX) {
       this._panX = val;
+      void this.updateView();
       this.update();
     }
   }
@@ -172,6 +174,7 @@ export class MiniMap {
   public set panY(val) {
     if (val !== this.panY) {
       this._panY = val;
+      void this.updateView();
       this.update();
     }
   }
@@ -180,6 +183,7 @@ export class MiniMap {
   public set zoom(val) {
     if (val !== this.zoom) {
       this._zoom = val;
+      void this.updateView();
       this.update();
     }
   }
@@ -302,6 +306,15 @@ export class MiniMap {
   protected overlayPlane: PIXI.NineSlicePlane;
 
   private _contextMenu: foundry.applications.ux.ContextMenu<false> | undefined = undefined;
+
+  private async updateView() {
+    const game = await getGame();
+    await game.settings.set(__MODULE_ID__, "view", {
+      x: this.panX,
+      y: this.panY,
+      zoom: this.zoom
+    });
+  }
 
   protected getContextMenuItems(): foundry.applications.ux.ContextMenu.Entry<HTMLElement>[] {
     return [
@@ -538,7 +551,7 @@ export class MiniMap {
     else return 0;
   }
 
-  public readonly zoomStep = .01;
+  public readonly zoomStep = .025;
 
   protected onWheel(e: WheelEvent) {
     if (!this.visible) return;
@@ -615,6 +628,14 @@ export class MiniMap {
           this.mode = game.settings.get(__MODULE_ID__, "mode") as MapMode;
           this.image = game.settings.get(__MODULE_ID__, "image") as string;
           this.scene = game.settings.get(__MODULE_ID__, "scene") as string;
+
+          // Get client settings
+          const view: MapView | null = game.settings.get(__MODULE_ID__, "view") as MapView | null;
+          if (view) {
+            this.panX = view.x;
+            this.panY = view.y;
+            this.zoom = view.zoom;
+          }
 
           const overlaySettings = game.settings.get(__MODULE_ID__, "overlaySettings") as OverlaySettings;
           this.setOverlayFromSettings(overlaySettings);
