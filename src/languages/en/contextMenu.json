@@ -3,7 +3,8 @@
     "CONTEXTMENU": {
       "FIT": "Fit In View",
       "HIDE": "Hide MiniMap",
-      "SETTINGS": "MiniMap Settings"
+      "SETTINGS": "MiniMap Settings",
+      "SYNCHRONIZE": "Synchronize Other Players"
     }
   }
 }

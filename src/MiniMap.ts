@@ -365,6 +365,12 @@ export class MiniMap {
         callback: () => { this.fitMapView(); }
       },
       {
+        name: "MINIMAP.CONTEXTMENU.SYNCHRONIZE",
+        icon: `<i class="fas fa-refresh"></i>`,
+        condition: () => game.user.isGM,
+        callback: () => { if (game.user.isGM) void synchronizeView(); }
+      },
+      {
         name: "MINIMAP.CONTEXTMENU.SETTINGS",
         icon: `<i class="fas fa-cogs"></i>`,
         condition: () => game.user.can("SETTINGS_MODIFY"),
