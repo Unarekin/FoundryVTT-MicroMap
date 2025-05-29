@@ -1,6 +1,6 @@
 import { MapMode, MapPosition, MapShape, OverlaySettings } from './types';
 import { coerceScene } from './coercion';
-import { logError } from 'logging';
+import { log, logError } from 'logging';
 import { getGame } from 'utils';
 
 export class MiniMap {
@@ -49,15 +49,21 @@ export class MiniMap {
 
   public get image() { return this._image; }
   public set image(val) {
+    log("Setting image:", val);
     if (val !== this.image) {
       this._image = val;
 
-      const texture = PIXI.Texture.from(val);
-      if (!texture.valid) {
-        texture.baseTexture.once("loaded", () => {
+      if (val) {
+        const texture = PIXI.Texture.from(val);
+        if (!texture.valid) {
+          texture.baseTexture.once("loaded", () => {
+            this.staticSprite.texture = texture;
+            this.update();
+          })
+        } else {
           this.staticSprite.texture = texture;
           this.update();
-        })
+        }
       } else {
         this.update();
       }
@@ -196,8 +202,8 @@ export class MiniMap {
    * Updates the visuals of our minimap in accordance with its settings.
    */
   protected update() {
-    this.staticSprite.visible = this.mode === "image";
-    this.sceneSprite.visible = this.mode === "scene";
+    this.staticSprite.visible = this.mode === "image" && !!this.image;
+    this.sceneSprite.visible = this.mode === "scene" && !!this.scene;
 
     // this.staticSprite.width = this.width;
     // this.staticSprite.height = this.height;
@@ -531,6 +537,10 @@ export class MiniMap {
 
         this.height = game.settings.get(__MODULE_ID__, "height") as number;
         this.width = game.settings.get(__MODULE_ID__, "width") as number;
+
+        this.mode = game.settings.get(__MODULE_ID__, "mode") as MapMode;
+        this.image = game.settings.get(__MODULE_ID__, "image") as string;
+        log("Scene:", game.settings.get(__MODULE_ID__, "scene"));
 
         const overlaySettings = game.settings.get(__MODULE_ID__, "overlaySettings") as OverlaySettings;
         this.setOverlayFromSettings(overlaySettings);
