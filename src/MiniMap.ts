@@ -316,16 +316,14 @@ export class MiniMap {
     });
   }
 
-  protected getContextMenuItems(): foundry.applications.ux.ContextMenu.Entry<HTMLElement>[] {
+  protected async getContextMenuItems(): Promise<foundry.applications.ux.ContextMenu.Entry<HTMLElement>[]> {
+    const game = await getGame();
     return [
       {
         name: "MINIMAP.CONTEXTMENU.HIDE",
         icon: `<i class="fas fa-eye-slash"></i>`,
-        callback: () => {
-          getGame()
-            .then(game => game.settings.set(__MODULE_ID__, "show", false))
-            .catch((err: Error) => { logError(err); });
-        }
+        condition: () => game.user.can("SETTINGS_MODIFY"),
+        callback: () => { game.settings.set(__MODULE_ID__, "show", false).catch(logError) }
       },
       {
         name: "MINIMAP.CONTEXTMENU.FIT",
@@ -335,6 +333,7 @@ export class MiniMap {
       {
         name: "MINIMAP.CONTEXTMENU.SETTINGS",
         icon: `<i class="fas fa-cogs"></i>`,
+        condition: () => game.user.can("SETTINGS_MODIFY"),
         callback: () => {
           const app = foundry.applications.instances.has("settings-config") ? foundry.applications.instances.get("settings-config") : new foundry.applications.settings.SettingsConfig();
           if (app instanceof foundry.applications.settings.SettingsConfig) {
@@ -351,6 +350,10 @@ export class MiniMap {
   protected async showContextMenu(x: number, y: number) {
     if (this._contextMenu) await this._contextMenu.close();
 
+    const menuItems = await this.getContextMenuItems();
+
+    if (!menuItems.length) return;
+
     const elem = document.createElement("section");
     elem.style.position = "absolute";
     elem.style.pointerEvents = "auto";
@@ -363,7 +366,7 @@ export class MiniMap {
 
     container.appendChild(elem);
 
-    const menuItems = this.getContextMenuItems();
+
 
     // No visible items
     if (!menuItems.some(item => typeof item.condition === "function" ? item.condition(elem) : typeof item.condition === "boolean" ? item.condition : true)) return;
@@ -371,7 +374,7 @@ export class MiniMap {
     const menu = new foundry.applications.ux.ContextMenu(
       container,
       `[data-role="minimap-menu"]`,
-      this.getContextMenuItems(),
+      menuItems,
       {
         onClose: () => {
           elem.remove();
@@ -530,13 +533,7 @@ export class MiniMap {
   }
 
   protected onRightClick(e: PIXI.FederatedPointerEvent) {
-    getGame()
-      .then(game => {
-        if (game.user.can("SETTINGS_MODIFY"))
-          return this.showContextMenu(e.clientX, e.clientY);
-      })
-      .catch((err: Error) => { logError(err); })
-      ;
+    void this.showContextMenu(e.clientX, e.clientY);
   }
 
   public get baseWidth() {
