@@ -1,4 +1,4 @@
-import { logError } from 'logging';
+import { log, logError } from 'logging';
 import { coerceScene } from './coercion';
 
 export class SceneRenderer {
@@ -149,11 +149,12 @@ export class SceneRenderer {
       if (!this.shouldProcessDocument(doc)) return;
       if (!doc.texture.src) return;
 
-
       // Create sprite
       const texture = PIXI.Texture.from(doc.texture.src);
       const sprite = new PIXI.Sprite(texture);
 
+      sprite.name = doc.name ?? doc.uuid;
+      log("Added sprite:", sprite.name);
       this.sprites[doc.uuid] = sprite;
       this.container.addChild(sprite);
       this.documentUpdated(doc, {});
@@ -164,20 +165,28 @@ export class SceneRenderer {
 
   private documentUpdated(doc: TileDocument | TokenDocument, delta: Partial<TileDocument> | Partial<TokenDocument>) {
     try {
+      log("Updated:", doc);
       if (!this.shouldProcessDocument(doc)) return;
       const sprite = this.getSprite(doc);
+      log("Sprite:", sprite);
       if (!sprite) return;
 
-      sprite.tint = doc.texture.tint ?? "#FFFFFF";
-      sprite.rotation = doc.texture.rotation;
+      sprite.tint = delta.texture?.tint ?? (doc.texture.tint ?? "#FFFFFF");
+      sprite.rotation = delta.texture?.rotation ?? doc.texture.rotation;
 
       sprite.x = (typeof delta.x === "number" ? delta.x : doc.x) - this.scene!.dimensions.sceneX;
       sprite.y = (typeof delta.y === "number" ? delta.y : doc.y) - this.scene!.dimensions.sceneY;
+      sprite.zIndex = (typeof delta.sort === "number" ? delta.sort : doc.sort);
 
       const gridSize = this.scene!.grid.size;   // Our shoudlProcessDocument call earlier ensures scene is not null
 
-      sprite.width = (doc.width ?? 1) * gridSize;
-      sprite.height = (doc.height ?? 1) * gridSize;
+      if (doc instanceof TokenDocument) {
+        sprite.width = ((typeof delta.width === "number" ? delta.width : doc.width) ?? 1) * gridSize;
+        sprite.height = ((typeof delta.height === "number" ? delta.height : doc.height) ?? 1) * gridSize;
+      } else if (doc instanceof TileDocument) {
+        sprite.width = delta.width ?? doc.width;
+        sprite.height = delta.height ?? doc.height;
+      }
     } catch (err) {
       logError(err as Error);
     }
