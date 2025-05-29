@@ -1,6 +1,7 @@
 {
   "MINIMAP": {
     "CONTEXTMENU": {
+      "FIT": "Fit In View",
       "HIDE": "Hide MiniMap",
       "SETTINGS": "MiniMap Settings"
     }

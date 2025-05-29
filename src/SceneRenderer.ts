@@ -1,4 +1,4 @@
-import { log, logError } from 'logging';
+import { logError } from 'logging';
 import { coerceScene } from './coercion';
 
 export class SceneRenderer {
@@ -165,9 +165,6 @@ export class SceneRenderer {
   private documentUpdated(doc: TileDocument | TokenDocument, delta: Partial<TileDocument> | Partial<TokenDocument>) {
     try {
       if (!this.shouldProcessDocument(doc)) return;
-
-      log("Updating:", doc.x, doc.y);
-
       const sprite = this.getSprite(doc);
       if (!sprite) return;
 

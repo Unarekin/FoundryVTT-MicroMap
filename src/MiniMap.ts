@@ -11,7 +11,6 @@ export class MiniMap {
 
   public static readonly DefaultWidth = 300;
   public static readonly DefaultHeight = 200;
-  public static readonly ZoomStep = .05;
   public static readonly MinZoom = .01;
   public static readonly MaxZoom = 5;
 
@@ -269,6 +268,35 @@ export class MiniMap {
     }
   }
 
+  public fitMapView() {
+    this.#mapContainer.position.set(0, 0);
+    let width = this.baseWidth;
+    let height = this.baseHeight;
+
+    const maxWidth = this.width;
+    const maxHeight = this.height;
+
+
+
+    if (width > height) {
+      if (width > maxWidth) {
+        height *= maxWidth / width;
+        width = maxWidth;
+      }
+    } else {
+      if (height > maxHeight) {
+        width *= maxHeight / height;
+        height = maxHeight;
+      }
+    }
+
+    this.#mapContainer.width = width;
+    this.#mapContainer.height = height;
+    this.panX = 0;
+    this.panY = 0;
+    this.zoom = this.#mapContainer.scale.x;
+  }
+
   protected staticSprite: PIXI.Sprite;
   protected sceneSprite: PIXI.Sprite;
   protected overlayPlane: PIXI.NineSlicePlane;
@@ -285,6 +313,11 @@ export class MiniMap {
             .then(game => game.settings.set(__MODULE_ID__, "show", false))
             .catch((err: Error) => { logError(err); });
         }
+      },
+      {
+        name: "MINIMAP.CONTEXTMENU.FIT",
+        icon: `<i class="fas fa-frame"></i>`,
+        callback: () => { this.fitMapView(); }
       },
       {
         name: "MINIMAP.CONTEXTMENU.SETTINGS",
@@ -493,13 +526,27 @@ export class MiniMap {
       ;
   }
 
+  public get baseWidth() {
+    if (this.mode === "image") return this.staticSprite.texture.width;
+    else if (this.mode === "scene") return this.sceneSprite.texture.width
+    else return 0;
+  }
+
+  public get baseHeight() {
+    if (this.mode === "image") return this.sceneSprite.texture.height;
+    else if (this.mode === "scene") return this.sceneSprite.texture.height;
+    else return 0;
+  }
+
+  public readonly zoomStep = .01;
+
   protected onWheel(e: WheelEvent) {
     if (!this.visible) return;
     const bounds = this.container.getBounds();
     if (bounds.contains(e.clientX, e.clientY)) {
       e.stopPropagation();
-      if (e.deltaY < 0) this.zoom = Math.min(Math.max(this.zoom + MiniMap.ZoomStep, MiniMap.MinZoom), MiniMap.MaxZoom);
-      else if (e.deltaY > 0) this.zoom = Math.min(Math.max(this.zoom - MiniMap.ZoomStep, MiniMap.MinZoom), MiniMap.MaxZoom);
+      if (e.deltaY < 0) this.zoom = Math.min(Math.max(this.zoom + this.zoomStep, MiniMap.MinZoom), MiniMap.MaxZoom);
+      else if (e.deltaY > 0) this.zoom = Math.min(Math.max(this.zoom - this.zoomStep, MiniMap.MinZoom), MiniMap.MaxZoom);
     }
   }
 
