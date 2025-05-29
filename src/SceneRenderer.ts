@@ -1,4 +1,4 @@
-import { log, logError } from 'logging';
+import { logError } from 'logging';
 import { coerceScene } from './coercion';
 
 export class SceneRenderer {
@@ -154,7 +154,6 @@ export class SceneRenderer {
       const sprite = new PIXI.Sprite(texture);
 
       sprite.name = doc.name ?? doc.uuid;
-      log("Added sprite:", sprite.name);
       this.sprites[doc.uuid] = sprite;
       this.container.addChild(sprite);
       this.documentUpdated(doc, {});
@@ -165,10 +164,8 @@ export class SceneRenderer {
 
   private documentUpdated(doc: TileDocument | TokenDocument, delta: Partial<TileDocument> | Partial<TokenDocument>) {
     try {
-      log("Updated:", doc);
       if (!this.shouldProcessDocument(doc)) return;
       const sprite = this.getSprite(doc);
-      log("Sprite:", sprite);
       if (!sprite) return;
 
       sprite.tint = delta.texture?.tint ?? (doc.texture.tint ?? "#FFFFFF");
@@ -179,6 +176,9 @@ export class SceneRenderer {
       sprite.zIndex = (typeof delta.sort === "number" ? delta.sort : doc.sort);
 
       const gridSize = this.scene!.grid.size;   // Our shoudlProcessDocument call earlier ensures scene is not null
+
+      sprite.renderable = !(delta.hidden ?? doc.hidden);
+      sprite.alpha = delta.alpha ?? doc.alpha;
 
       if (doc instanceof TokenDocument) {
         sprite.width = ((typeof delta.width === "number" ? delta.width : doc.width) ?? 1) * gridSize;
