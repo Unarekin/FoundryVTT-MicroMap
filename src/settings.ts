@@ -61,13 +61,16 @@ Hooks.once("init", () => {
         name: "DOCUMENT.Scene",
         config: true,
         scope: "world",
-        type: new foundry.data.fields.ForeignDocumentField(Scene, { nullable: true }),
+        type: new foundry.data.fields.ForeignDocumentField(Scene, {
+          nullable: true,
+          idOnly: true
+        }),
         default: null,
         requiresReload: false,
-        onChange(val: (() => Scene | null)) {
+        onChange(id: string) {
           const map = getMiniMap();
           if (!(map instanceof MiniMap)) return;
-          map.scene = val() ?? undefined;
+          map.scene = id;
         }
       });
 

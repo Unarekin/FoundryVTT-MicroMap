@@ -1,4 +1,4 @@
-import { log, logError } from 'logging';
+import { logError } from 'logging';
 import { coerceScene } from './coercion';
 
 export class SceneRenderer {
@@ -120,10 +120,11 @@ export class SceneRenderer {
   }
 
   private initializeScene() {
+    const notification = ui.notifications?.info("MINIMAP.INITIALIZING", { console: false, localize: true, permanent: true });
     try {
-      log("Initializing scene", this.scene, this.active);
       if (!this.scene) return;
       if (!this.active) return;
+
 
       // Clean out old sprites
       const entries = Object.entries(this.sprites);
@@ -138,6 +139,8 @@ export class SceneRenderer {
       this.scene.tiles.forEach(doc => { this.documentAdded(doc); });
     } catch (err) {
       logError(err as Error);
+    } finally {
+      if (notification?.remove) notification.remove();
     }
   }
 

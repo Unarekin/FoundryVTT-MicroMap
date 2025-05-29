@@ -51,8 +51,12 @@ export class MiniMap {
     if (scene !== this.scene) {
       this._scene = scene;
       this.sceneRenderer.scene = scene;
-      if (scene && this.mode === "scene") this.sceneRenderer.active = true;
-      else this.sceneRenderer.active = false;
+      if (scene && this.mode === "scene") {
+        this.sceneRenderer.active = true;
+        this.resetPosition();
+      } else {
+        this.sceneRenderer.active = false;
+      }
 
       this.update();
     }
@@ -206,6 +210,12 @@ export class MiniMap {
     if (!(hotbar instanceof HTMLElement)) return window.innerHeight - this.height;
     const { y } = hotbar.getBoundingClientRect();
     return y - this.height;
+  }
+
+  private resetPosition() {
+    this.#mapContainer.scale.set(1, 1);
+    this.#mapContainer.x = -this.#mapContainer.width / 2;
+    this.#mapContainer.y = -this.#mapContainer.height / 2;
   }
 
   /**
@@ -556,7 +566,7 @@ export class MiniMap {
 
           this.mode = game.settings.get(__MODULE_ID__, "mode") as MapMode;
           this.image = game.settings.get(__MODULE_ID__, "image") as string;
-          this.scene = game.settings.get(__MODULE_ID__, "scene") as Scene | null ?? undefined;
+          this.scene = game.settings.get(__MODULE_ID__, "scene") as string;
 
           const overlaySettings = game.settings.get(__MODULE_ID__, "overlaySettings") as OverlaySettings;
           this.setOverlayFromSettings(overlaySettings);
@@ -566,6 +576,7 @@ export class MiniMap {
         } finally {
           this._suppressUpdate = false;
           this.update();
+          // if (this.scene && this.mode === "scene") this.sceneRenderer.active = true;
         }
       })
       .catch((err: Error) => { logError(err); })
