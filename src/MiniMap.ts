@@ -273,32 +273,25 @@ export class MiniMap {
   }
 
   public fitMapView() {
-    this.#mapContainer.position.set(0, 0);
-    let width = this.baseWidth;
-    let height = this.baseHeight;
+    this.panX = 0;
+    this.panY = 0;
+
+    const width = this.baseWidth;
+    const height = this.baseHeight;
 
     const maxWidth = this.width;
     const maxHeight = this.height;
 
 
-
     if (width > height) {
       if (width > maxWidth) {
-        height *= maxWidth / width;
-        width = maxWidth;
+        this.zoom = maxWidth / width;
       }
     } else {
       if (height > maxHeight) {
-        width *= maxHeight / height;
-        height = maxHeight;
+        this.zoom = maxHeight / height;
       }
     }
-
-    this.#mapContainer.width = width;
-    this.#mapContainer.height = height;
-    this.panX = 0;
-    this.panY = 0;
-    this.zoom = this.#mapContainer.scale.x;
   }
 
   protected staticSprite: PIXI.Sprite;
@@ -538,13 +531,13 @@ export class MiniMap {
 
   public get baseWidth() {
     if (this.mode === "image") return this.staticSprite.texture.width;
-    else if (this.mode === "scene") return this.sceneSprite.texture.width
+    else if (this.mode === "scene") return this.scene?.dimensions.sceneWidth ?? 0;
     else return 0;
   }
 
   public get baseHeight() {
-    if (this.mode === "image") return this.sceneSprite.texture.height;
-    else if (this.mode === "scene") return this.sceneSprite.texture.height;
+    if (this.mode === "image") return this.staticSprite.texture.height;
+    else if (this.mode === "scene") return this.scene?.dimensions.sceneHeight ?? 0;
     else return 0;
   }
 
