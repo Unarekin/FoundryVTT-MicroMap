@@ -324,8 +324,8 @@ Hooks.on("renderSettingsConfig", async (config: foundry.applications.settings.Se
     const widthField = new foundry.data.fields.NumberField(game.settings.settings.get(`${__MODULE_ID__}.width`));
     const heightField = new foundry.data.fields.NumberField(game.settings.settings.get(`${__MODULE_ID__}.height`));
 
-    const widthElem = widthField.toFormGroup({ label: "Width", localize: true }, { value: game.settings.get(__MODULE_ID__, "width") as number });
-    const heightElem = heightField.toFormGroup({ label: "Height", localize: true }, { value: game.settings.get(__MODULE_ID__, "height") as number });
+    const widthElem = widthField.toFormGroup({ label: "Width", localize: true }, { value: game.settings.get(__MODULE_ID__, "width") as number, name: `${__MODULE_ID__}.width`, id: `settings-config-${__MODULE_ID__}.width` });
+    const heightElem = heightField.toFormGroup({ label: "Height", localize: true }, { value: game.settings.get(__MODULE_ID__, "height") as number, name: `${__MODULE_ID__}.height`, id: `settings-config-${__MODULE_ID__}.height` });
 
     dimensions.innerHTML = `<label>${localize("TOKEN.Dimensions")}</label>
   <div class="form-fields">
