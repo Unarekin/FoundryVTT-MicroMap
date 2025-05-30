@@ -1,20 +1,20 @@
 {
-  "name": "foundryvtt-minimap",
+  "name": "foundryvtt-micromap",
   "version": "1.0.0",
-  "description": "A FoundryVTT module to show an insert with a minimap.",
+  "description": "A FoundryVTT module to show an insert with a MicroMap.",
   "keywords": [
     "foundry",
-    "minimap",
+    "MicroMap",
     "vtt",
     "foundryvtt"
   ],
-  "homepage": "https://github.com/Unarekin/FoundryVTT-MiniMap#readme",
+  "homepage": "https://github.com/Unarekin/FoundryVTT-MicroMap#readme",
   "bugs": {
-    "url": "https://github.com/Unarekin/FoundryVTT-MiniMap/issues"
+    "url": "https://github.com/Unarekin/FoundryVTT-MicroMap/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Unarekin/FoundryVTT-MiniMap.git"
+    "url": "git+https://github.com/Unarekin/FoundryVTT-MicroMap.git"
   },
   "license": "MIT",
   "author": "Unarekin",
