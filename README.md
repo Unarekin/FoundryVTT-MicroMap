@@ -57,12 +57,16 @@ So unless I stumble across some mechanism that *wildly* simplifies those feature
 
 # Attributions & Acknowledgements
 
-Though the module itself does not include any assets (other than a 1x1 transparent image, but that hardly counts), the logo and examples use assets created by the following:
+The following assets were used to create the logo and example images:
 - [16x16 Compass/WIndRose](https://opengameart.org/content/16x16-compasswindrose) by Deco, released under the [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/) license.
 - [RPG GUI Construction Kit vMoon](https://opengameart.org/content/rpg-gui-contstruction-kit-vmoon) by Under the moon, released under the [CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/) license.
 - [3-form RPG Boss: "Harlequin Epicycle"](https://opengameart.org/content/3-form-rpg-boss-harlequin-epicycle) by Redshrike, released under the [CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/) license.
 - [JS Actors - Aeon Warriors Field & Battle Sprites](https://opengameart.org/content/js-actors-aeon-warriors-field-battle-sprites) by JosephSeraph, released under the [CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/) license.
 - The dungeon layout used in the actual minimap insert was generated with [watabou](https://watabou.itch.io/)'s [one-page-dungeon](https://watabou.itch.io/one-page-dungeon) generator
+
+The module also includes assets from the following:
+- [Graphite Border](https://opengameart.org/content/graphite-border) by nicubunu, released under the [CC-0](https://creativecommons.org/publicdomain/zero/1.0/) license.
+- [Tiny RPG - Dragon Regalia GUI](https://opengameart.org/content/tiny-rpg-dragon-regalia-gui) and [Tiny RPG - Mana Soul GUI](https://opengameart.org/content/tiny-rpg-mana-soul-gui), both by tiopalada, released under the [CC-0](https://creativecommons.org/publicdomain/zero/1.0/) license.
 
 # Support
 
