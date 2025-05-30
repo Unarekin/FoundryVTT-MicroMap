@@ -21,7 +21,8 @@
   "type": "commonjs",
   "main": "dist/module.js",
   "scripts": {
-    "build": "node build.mjs"
+    "build": "node build.mjs",
+    "build:prod": "NODE_ENV=production node build.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.27.0",
