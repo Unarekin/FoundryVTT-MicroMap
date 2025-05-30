@@ -170,7 +170,6 @@ export class SceneRenderer {
       if (!sprite) return;
 
       sprite.tint = delta.texture?.tint ?? (doc.texture.tint ?? "#FFFFFF");
-      sprite.rotation = delta.texture?.rotation ?? doc.texture.rotation;
 
       sprite.x = (typeof delta.x === "number" ? delta.x : doc.x) - this.scene!.dimensions.sceneX;
       sprite.y = (typeof delta.y === "number" ? delta.y : doc.y) - this.scene!.dimensions.sceneY;
@@ -200,6 +199,17 @@ export class SceneRenderer {
 
       if (sprite.scale.x < 0) sprite.x += sprite.width;
       if (sprite.scale.y < 0) sprite.y += sprite.height;
+
+      sprite.anchor.x = sprite.anchor.y = 0.5;
+      if (doc instanceof TokenDocument) {
+        sprite.x += (sprite.width / 2) * sprite.scale.x;
+        sprite.y += (sprite.height / 2) * sprite.scale.y;
+      } else {
+        sprite.x += sprite.width / 2;
+        sprite.y += sprite.height / 2;
+      }
+
+      sprite.angle = delta.rotation ?? doc.rotation;
 
     } catch (err) {
       logError(err as Error);
