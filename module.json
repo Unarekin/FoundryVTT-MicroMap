@@ -1,6 +1,6 @@
 {
-  "id": "miniature-map",
-  "title": "Miniature Map",
+  "id": "micro-map",
+  "title": "MicroMap",
   "description": "",
   "version": "#{VERSION}#",
   "library": "false",
