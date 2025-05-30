@@ -188,6 +188,19 @@ export class SceneRenderer {
         sprite.width = delta.width ?? doc.width;
         sprite.height = delta.height ?? doc.height;
       }
+
+      const scaleX = delta?.texture?.scaleX ?? doc.texture?.scaleX ?? 1;
+      const scaleY = delta?.texture?.scaleY ?? doc.texture?.scaleY ?? 1;
+
+      if (scaleX < 0 && sprite.scale.x > 0) sprite.scale.x *= -1;
+      else if (scaleX > 0 && sprite.scale.x < 0) sprite.scale.x *= -1;
+
+      if (scaleY < 0 && sprite.scale.y > 0) sprite.scale.y *= -1;
+      else if (scaleY > 0 && sprite.scale.y < 0) sprite.scale.y *= -1;
+
+      if (sprite.scale.x < 0) sprite.x += sprite.width;
+      if (sprite.scale.y < 0) sprite.y += sprite.height;
+
     } catch (err) {
       logError(err as Error);
     }
