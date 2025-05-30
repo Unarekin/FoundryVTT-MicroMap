@@ -1,7 +1,7 @@
 import { MapMode, MapPosition, MapShape, MapView, OverlaySettings } from './types';
 import { coerceScene } from './coercion';
 import { logError } from 'logging';
-import { getGame } from 'utils';
+import { getGame, nineSliceScale } from 'utils';
 import { SceneRenderer } from './SceneRenderer';
 import { synchronizeView } from 'sockets';
 import { LocalizedError } from 'errors';
@@ -519,7 +519,7 @@ export class MiniMap {
     return PIXI.Texture.from(canvas);
   }
 
-  protected generateMaskImage(shape: MapShape): PIXI.Texture | undefined {
+  protected async generateMaskImage(shape: MapShape): Promise<PIXI.Texture | undefined> {
     switch (shape) {
       case "circle":
         return this.generateCircularMask();
@@ -527,9 +527,12 @@ export class MiniMap {
       case "diamond":
         return this.generateDiamondMask();
         break;
-      case "mask":
-        if (this.mask) return PIXI.Texture.from(this.mask);
+      case "mask": {
+        if (!this.mask) return;
+        const cv = await nineSliceScale(this.mask, this.width, this.height, this.overlayPlane.leftWidth, this.overlayPlane.rightWidth, this.overlayPlane.topHeight, this.overlayPlane.bottomHeight);
+        if (cv) return PIXI.Texture.from(cv);
         break;
+      }
       case "rectangle":
         return this.generateRectangleMask();
         break;
@@ -537,24 +540,22 @@ export class MiniMap {
   }
 
   protected setMask(shape: MapShape) {
-    const texture = this.generateMaskImage(shape);
-    if (!(texture instanceof PIXI.Texture)) return;
-    if (this.#mapContainer.mask instanceof PIXI.Sprite && !this.#mapContainer.mask.destroyed) this.#mapContainer.mask.destroy();
+    this.generateMaskImage(shape)
+      .then(texture => {
+        if (!texture) return;
 
-    // if (this.staticSprite.mask instanceof PIXI.Sprite && !this.staticSprite.mask.destroyed) this.staticSprite.mask.destroy();
-    // if (this.sceneSprite.mask instanceof PIXI.Sprite && !this.sceneSprite.mask.destroyed) this.sceneSprite.mask.destroy();
-    // if (this.#bgSprite.mask instanceof PIXI.Sprite && !this.#bgSprite.mask.destroyed) this.#bgSprite.mask.destroy();
+        if (!(texture instanceof PIXI.Texture)) return;
+        if (this.#mapContainer.mask instanceof PIXI.Sprite && !this.#mapContainer.mask.destroyed) this.#mapContainer.mask.destroy();
 
-    const sprite = new PIXI.Sprite(texture);
-    sprite.name = "Mask";
-    sprite.width = this.width;
-    sprite.height = this.height;
-    this.container.addChild(sprite);
-    this.#mapContainer.mask = sprite;
-    // this.staticSprite.mask = sprite;
-    // this.sceneSprite.mask = sprite;
-    this.#bgSprite.mask = sprite;
-    // this.container.mask = sprite;
+        const sprite = new PIXI.Sprite(texture);
+        sprite.name = "Mask";
+        sprite.width = this.width;
+        sprite.height = this.height;
+        this.container.addChild(sprite);
+        this.#mapContainer.mask = sprite;
+        this.#bgSprite.mask = sprite;
+      })
+      .catch((err: Error) => { logError(err); });
   }
 
   // #dragListener: (tyepof this.onDragMove) | null = null;
@@ -745,7 +746,5 @@ export class MiniMap {
         }
       })
       .catch((err: Error) => { logError(err); })
-
-    // this.update = foundry.utils.debounce(this.update.bind(this), 16)
   }
 }
