@@ -30,6 +30,12 @@ Hooks.once("canvasReady", () => {
     menuContainer.style.height = "100%";
     document.body.appendChild(menuContainer);
 
+    const menuElem = document.createElement("section");
+    menuElem.style.position = "absolute";
+    menuElem.style.pointerEvents = "auto";
+    menuElem.dataset.role = "minimap-menu";
+    menuContainer.appendChild(menuElem);
+
     log("Canvas group initialized.");
   } catch (err) {
     logError(err as Error);

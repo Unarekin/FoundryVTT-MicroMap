@@ -4,6 +4,7 @@ import { logError } from 'logging';
 import { getGame } from 'utils';
 import { SceneRenderer } from './SceneRenderer';
 import { synchronizeView } from 'sockets';
+import { LocalizedError } from 'errors';
 
 export class MiniMap {
   public readonly container = new PIXI.Container();
@@ -357,12 +358,16 @@ export class MiniMap {
         icon: `<i class="fas fa-cogs"></i>`,
         condition: () => game.user.can("SETTINGS_MODIFY"),
         callback: () => {
-          const app = foundry.applications.instances.has("settings-config") ? foundry.applications.instances.get("settings-config") : new foundry.applications.settings.SettingsConfig();
-          if (app instanceof foundry.applications.settings.SettingsConfig) {
-            app.render({ force: true })
-              .then(() => { app.changeTab(__MODULE_ID__, "categories"); })
-              .catch((err: Error) => { logError(err); })
-          }
+
+          // This may seem odd, but v13's render() function returns a promise, v12 does not.
+          // And trying to change the tab in v12 on the first time the application has been
+          // rendered will throw an error, since the DOM elements do not yet exist.
+          Hooks.once("renderSettingsConfig", () => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+            if (game.release?.isNewer("13")) (game.settings.sheet as any).changeTab(__MODULE_ID__, "categories");
+            else game.settings.sheet.activateTab(__MODULE_ID__);
+          });
+          game.settings.sheet.render(true);
         }
       },
       {
@@ -400,55 +405,47 @@ export class MiniMap {
 
 
   protected async showContextMenu(x: number, y: number) {
-    if (this._contextMenu) await this._contextMenu.close();
+    try {
+      const elem = document.querySelector(`[data-role="minimap-menu"]`);
+      if (!(elem instanceof HTMLElement)) throw new LocalizedError("CONTEXTMENUELEMENTNOTFOUND");
+      const menuItems = await this.getContextMenuItems();
+      if (!menuItems.some(item => typeof item.condition === "function" ? item.condition(elem) : typeof item.condition === "boolean" ? item.condition : true)) return;
 
-    const menuItems = await this.getContextMenuItems();
+      // Position parent element
+      elem.style.top = `${y}px`;
+      elem.style.left = `${x}px`
 
-    if (!menuItems.length) return;
+      if (!this._contextMenu) {
+        // Create context menu
+        const container = document.getElementById(`mm-menu-container`);
+        if (!(container instanceof HTMLElement)) throw new LocalizedError("CONTEXTMENUELEMENTNOTFOUND");
+        if (game.release?.isNewer("13")) {
+          this._contextMenu = new foundry.applications.ux.ContextMenu(
+            container,
+            `[data-role="minimap-menu"]`,
+            menuItems,
+            {
+              jQuery: false
+            }
+          )
+        } else {
+          // The v13 types do not include this declaration, but in Foundry 12 and below,
+          // ContextMenu *does* exist.
 
-    const elem = document.createElement("section");
-    elem.style.position = "absolute";
-    elem.style.pointerEvents = "auto";
-    elem.dataset.role = "minimap-menu"
-
-    const container = document.getElementById("mm-menu-container");
-    if (!(container instanceof HTMLElement)) return;
-    elem.style.top = `${y}px`;
-    elem.style.left = `${x}px`
-
-    container.appendChild(elem);
-
-
-
-    // No visible items
-    if (!menuItems.some(item => typeof item.condition === "function" ? item.condition(elem) : typeof item.condition === "boolean" ? item.condition : true)) return;
-
-    const menu = new foundry.applications.ux.ContextMenu(
-      container,
-      `[data-role="minimap-menu"]`,
-      menuItems,
-      {
-        onClose: () => {
-          elem.remove();
-          if (this._contextMenu === menu) this._contextMenu = undefined;
-        },
-        jQuery: false
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+          this._contextMenu = new ContextMenu(
+            $(container),
+            `[data-role="minimap-menu"]`,
+            menuItems
+          ) as foundry.applications.ux.ContextMenu<false>;
+        }
       }
-    );
-
-
-    this._contextMenu = menu;
-    await menu.render(elem);
-    const listener = (e: MouseEvent) => {
-      if (!menu.element.contains(e.currentTarget as HTMLElement)) {
-        void menu.close();
-        document.removeEventListener("click", listener);
-        document.removeEventListener("contextmenu", listener);
-      }
-    };
-    document.addEventListener("click", listener);
-    document.addEventListener("contextmenu", listener);
+      await this._contextMenu.render(game.release?.isNewer("13") ? elem : $(elem) as unknown as HTMLElement);
+    } catch (err) {
+      logError(err as Error);
+    }
   }
+
 
   public setOverlayFromSettings(settings: OverlaySettings) {
     if (!settings.file) {
@@ -676,9 +673,30 @@ export class MiniMap {
     const board = document.getElementById("board");
     if (board instanceof HTMLElement) board.addEventListener("wheel", e => { this.onWheel(e); }, true)
 
+
+
     window.addEventListener("resize", () => { this.update(); })
     Hooks.on("collapseSidebar", () => { setTimeout(() => { this.update(); }, 500) });
     Hooks.on("changeSidebarTab", () => { this.update(); });
+
+    // Set up context menu
+
+    document.addEventListener("click", (e: MouseEvent) => {
+      if (this._contextMenu) {
+        const elem = this._contextMenu.element instanceof HTMLElement ? this._contextMenu.element : (this._contextMenu.element as JQuery<HTMLElement>)[0];
+        if (!elem.contains(e.currentTarget as HTMLElement)) {
+          void this._contextMenu.close();
+        }
+      }
+    });
+
+    document.addEventListener("contextmenu", (e: MouseEvent) => {
+      if (this._contextMenu) {
+        const point = this.container.toLocal({ x: e.x, y: e.y });
+        const bounds = this.container.getLocalBounds();
+        if (!bounds.contains(point.x, point.y)) void this._contextMenu.close();
+      }
+    });
 
     getGame()
       .then(game => {
