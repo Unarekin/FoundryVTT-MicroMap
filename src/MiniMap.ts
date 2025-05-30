@@ -228,30 +228,34 @@ export class MiniMap {
   }
 
   protected get screenTop() {
-    const uiTop = document.getElementById("scene-navigation-inactive");
-    if (!(uiTop instanceof HTMLElement)) return 0;
-
-    return uiTop.getBoundingClientRect().y;
+    if (game?.release?.isNewer("13")) {
+      const uiTop = document.getElementById("scene-navigation-inactive");
+      if (!(uiTop instanceof HTMLElement)) return 0;
+      return uiTop.getBoundingClientRect().y;
+    } else {
+      const uiTop = document.getElementById("ui-top");
+      if (!(uiTop instanceof HTMLElement)) return 0;
+      return uiTop.getBoundingClientRect().bottom;
+    }
   }
 
   public get screenLeft() {
-    const uiLeft = document.getElementById("ui-left-column-1");
+    const uiLeft = document.getElementById(game?.release?.isNewer("13") ? "ui-left-column-1" : "ui-left");
     if (!(uiLeft instanceof HTMLElement)) return 0;
     return uiLeft.getBoundingClientRect().right;
   }
 
   // protected get screenRight() { return window.innerWidth - this.width; }
   protected get screenRight() {
-    const uiRight = document.getElementById("chat-message");
+
+    const uiRight = document.getElementById(game?.release?.isNewer("13") ? "chat-message" : "ui-right");
     if (!(uiRight instanceof HTMLElement)) return window.innerWidth - this.width;
-    const { x } = uiRight.getBoundingClientRect();
-    return x - this.width;
+    return uiRight.getBoundingClientRect().x - this.width;
   }
   protected get screenBottom() {
-    const hotbar = document.getElementById("hotbar");
-    if (!(hotbar instanceof HTMLElement)) return window.innerHeight - this.height;
-    const { y } = hotbar.getBoundingClientRect();
-    return y - this.height;
+    const uiBottom = document.getElementById(game?.release?.isNewer("13") ? "hotbar" : "ui-bottom");
+    if (!(uiBottom instanceof HTMLElement)) return window.innerHeight - this.height;
+    return uiBottom.getBoundingClientRect().y - this.height;
   }
 
   private resetPosition() {
