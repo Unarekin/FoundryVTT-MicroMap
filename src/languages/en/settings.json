@@ -1,0 +1,59 @@
+{
+  "MINIMAP": {
+    "SETTINGS": {
+      "MASK": {
+        "HINT": "An image to use as a mask for shaping the minimap.",
+        "NAME": "Image Mask"
+      },
+      "MODE": {
+        "NAME": "MiniMap Image Mode"
+      },
+      "LOCKGMVIEW": {
+        "NAME": "Lock To GM View",
+        "HINT": "If enabled, will force players' view to match the GM's."
+      },
+      "UNLOCKPLAYERS": {
+        "NAME": "Allow Players to Pan/Zoom MiniMap"
+      },
+      "OVERLAY": {
+        "BORDERS": "Borders",
+        "BOTTOM": "Bottom",
+        "BUTTON": "Configure Overlay",
+        "HINT": "An image to overlay atop the minimap.",
+        "LEFT": "Left",
+        "NAME": "MiniMap Overlay",
+        "RIGHT": "Right",
+        "TOP": "Top",
+        "SHOW": "Show Overlay"
+      },
+      "PADDING": {
+        "HINT": "Space, in pixels, from the edge of the canvas area.",
+        "NAME": "Padding"
+      },
+      "POSITION": {
+        "BOTTOMLEFT": "Bottom Left",
+        "BOTTOMRIGHT": "Bottom Right",
+        "HINT": "Relative screen position of the minimap.",
+        "NAME": "MiniMap Position",
+        "TOPLEFT": "Top Left",
+        "TOPRIGHT": "Top Right"
+      },
+      "SHAPE": {
+        "CIRCLE": "Circular",
+        "DIAMOND": "Diamond",
+        "HINT": "The shape of the minimap",
+        "MASK": "Image Mask",
+        "NAME": "MiniMap Shape",
+        "RECTANGLE": "Rectangular"
+      },
+      "SHOW": {
+        "HINT": "If enabled, will show the minimap.",
+        "NAME": "Show MiniMap"
+      },
+      "BGCOLOR": {
+        "NAME": "Background Color",
+        "HINT": "The background color to use on the minimap"
+      }
+    }
+  }
+}

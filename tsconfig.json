@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig.json",
+  "exclude": ["./node_modules"],
+  "files": ["./src/module.ts"],
+  "compilerOptions": {
+    "baseUrl": "./src",
+    "outDir": "dist",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "types": ["fvtt-types", "./@types/global.d.ts"],
+    "moduleResolution": "bundler",
+    "noEmit": false,
+    "target": "ESNext",
+    "module": "ESNext",
+    "strict": true,
+    "noUncheckedIndexedAccess": false,
+    "allowJs": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true
+  }
+}

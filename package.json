@@ -1,0 +1,48 @@
+{
+  "name": "foundryvtt-micromap",
+  "version": "1.0.0",
+  "description": "A FoundryVTT module to show an insert with a MicroMap.",
+  "keywords": [
+    "foundry",
+    "MicroMap",
+    "vtt",
+    "foundryvtt"
+  ],
+  "homepage": "https://github.com/Unarekin/FoundryVTT-MicroMap#readme",
+  "bugs": {
+    "url": "https://github.com/Unarekin/FoundryVTT-MicroMap/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Unarekin/FoundryVTT-MicroMap.git"
+  },
+  "license": "MIT",
+  "author": "Unarekin",
+  "type": "commonjs",
+  "main": "dist/module.js",
+  "scripts": {
+    "build": "node build.mjs",
+    "typedoc": "npx typedoc"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.27.0",
+    "@foundryvtt/foundryvtt-cli": "^1.1.0",
+    "deepmerge-ts": "^7.1.5",
+    "esbuild": "^0.25.5",
+    "esbuild-copy-static-files": "^0.1.0",
+    "esbuild-node-externals": "^1.18.0",
+    "esbuild-plugin-clean": "^1.0.1",
+    "esbuild-plugin-json-merge": "^0.1.0",
+    "esbuild-plugin-noexternal": "^0.1.6",
+    "esbuild-sass-plugin": "^3.3.1",
+    "eslint": "^9.27.0",
+    "fvtt-types": "github:League-of-Foundry-Developers/foundry-vtt-types#main",
+    "typedoc": "^0.28.5",
+    "typedoc-github-theme": "^0.3.0",
+    "typedoc-plugin-rename-defaults": "^0.7.3",
+    "typedoc-plugin-version-header": "^1.0.0",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.33.0",
+    "yocto-spinner": "^0.2.3"
+  }
+}

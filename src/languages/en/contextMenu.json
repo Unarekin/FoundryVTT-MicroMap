@@ -1,0 +1,12 @@
+{
+  "MINIMAP": {
+    "CONTEXTMENU": {
+      "FIT": "Fit In View",
+      "HIDE": "Hide MiniMap",
+      "LOCKGM": "Lock to GM View",
+      "SETTINGS": "MiniMap Settings",
+      "SYNCHRONIZE": "Synchronize Other Players",
+      "UNLOCKGM": "Unlock from GM View"
+    }
+  }
+}

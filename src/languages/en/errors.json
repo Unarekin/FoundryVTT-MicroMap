@@ -1,0 +1,9 @@
+{
+  "MINIMAP": {
+    "ERRORS": {
+      "FILENOTFOUND": "File not found: {file}",
+      "CONTEXTMENUELEMENTNOTFOUND": "Container element for context menu not found",
+      "NOTINITIALIZED": "Renderer not initialized"
+    }
+  }
+}

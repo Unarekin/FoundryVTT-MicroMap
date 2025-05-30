@@ -1,0 +1,45 @@
+{
+  "id": "micro-map",
+  "title": "MicroMap",
+  "description": "",
+  "version": "#{VERSION}#",
+  "library": "false",
+  "compatibility": {
+    "minimum": 12,
+    "verified": 13,
+    "maximum": 13
+  },
+  "authors": [
+    {
+      "name": "Unarekin",
+      "url": "https://github.com/Unarekin",
+      "discord": "unarekin"
+    }
+  ],
+  "socket": true,
+  "relationships": {
+    "systems": [],
+    "requires": [
+      {
+        "id": "socketlib",
+        "type": "module",
+        "manifest": "https://github.com/farling42/foundryvtt-socketlib/releases/latest/download/module.json"
+      }
+    ]
+  },
+  "esmodules": ["module.js"],
+  "scripts": [],
+  "styles": ["styles/module.css"],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "languages/en.json"
+    }
+  ],
+  "url": "#{URL}#",
+  "manifest": "#{MANIFEST}#",
+  "download": "#{DOWNLOAD}#",
+  "license": "LICENSE",
+  "readme": "README.md"
+}
