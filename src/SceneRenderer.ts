@@ -197,17 +197,22 @@ export class SceneRenderer {
       if (scaleY < 0 && sprite.scale.y > 0) sprite.scale.y *= -1;
       else if (scaleY > 0 && sprite.scale.y < 0) sprite.scale.y *= -1;
 
-      if (sprite.scale.x < 0) sprite.x += sprite.width;
-      if (sprite.scale.y < 0) sprite.y += sprite.height;
+      // if (sprite.scale.x < 0) sprite.x += sprite.width;
+      // if (sprite.scale.y < 0) sprite.y += sprite.height;
 
       sprite.anchor.x = sprite.anchor.y = 0.5;
-      if (doc instanceof TokenDocument) {
-        sprite.x += (sprite.width / 2) * sprite.scale.x;
-        sprite.y += (sprite.height / 2) * sprite.scale.y;
-      } else {
-        sprite.x += sprite.width / 2;
-        sprite.y += sprite.height / 2;
-      }
+      sprite.x += sprite.width * sprite.anchor.x;
+      sprite.y += sprite.height * sprite.anchor.y;
+      // sprite.x += (sprite.width / 2);
+      // sprite.y += (sprite.height / 2);
+
+      // if (doc instanceof TokenDocument) {
+      //   sprite.x += (sprite.width / 2) * sprite.scale.x;
+      //   sprite.y += (sprite.height / 2) * sprite.scale.y;
+      // } else {
+      //   sprite.x += sprite.width / 2;
+      //   sprite.y += sprite.height / 2;
+      // }
 
       sprite.angle = delta.rotation ?? doc.rotation;
 
