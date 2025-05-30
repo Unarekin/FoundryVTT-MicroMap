@@ -12,6 +12,7 @@
   - [Usage Instructions](#usage-instructions)
   - [FAQ](#faq)
 - [Support](#support)
+- [Attributions \& Acknowledgements](#attributions--acknowledgements)
 
 # MicroMap
 
@@ -50,3 +51,9 @@ So unless I stumble across some mechanism that *wildly* simplifies those feature
 Do please consider throwing me a few bucks over on [Ko-Fi](https://ko-fi.com/unarekin) if you like what you see and are feeling generous.
 
 <a href='https://ko-fi.com/C0C2156VW2' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi6.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
+
+# Attributions & Acknowledgements
+
+Though the module itself does not include any assets (other than a 1x1 transparent image, but that hardly counts), the logo and examples use assets created by the following:
+- [16x16 Compass/WIndRose](https://opengameart.org/content/16x16-compasswindrose) by Deco, released under the [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/) license.
+- [RPG GUI Construction Kit vMoon](https://opengameart.org/content/rpg-gui-contstruction-kit-vmoon) by Under the moon, released under the [CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/) license.
