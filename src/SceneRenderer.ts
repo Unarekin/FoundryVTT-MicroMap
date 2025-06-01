@@ -173,6 +173,14 @@ export class SceneRenderer {
       const sprite = this.getSprite(doc);
       if (!sprite) return;
 
+      if (typeof delta?.texture?.src === "string") {
+        // Texture was changed
+        const texture = PIXI.Texture.from(delta.texture.src);
+        const oldTexture = sprite.texture;
+        sprite.texture = texture;
+        oldTexture.destroy();
+      }
+
       sprite.tint = delta.texture?.tint ?? (doc.texture.tint ?? "#FFFFFF");
 
       sprite.x = (typeof delta.x === "number" ? delta.x : doc.x) - this.scene!.dimensions.sceneX;
