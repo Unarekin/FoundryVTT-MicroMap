@@ -154,6 +154,10 @@ export class SceneRenderer {
       const texture = PIXI.Texture.from(doc.texture.src);
       const sprite = new PIXI.Sprite(texture);
 
+      // Ensure that a video texture is playing and loops
+      if (texture.baseTexture.resource instanceof PIXI.VideoResource)
+        game.video?.play(texture.baseTexture.resource.source, { loop: true });
+
       sprite.name = doc.name ?? doc.uuid;
       this.sprites[doc.uuid] = sprite;
       this.container.addChild(sprite);
