@@ -46,9 +46,13 @@
         "NAME": "MiniMap Shape",
         "RECTANGLE": "Rectangular"
       },
+      "ENABLE": {
+        "HINT": "If enabled, will enable the minimap.",
+        "NAME": "Enable MiniMap"
+      },
       "SHOW": {
-        "HINT": "If enabled, will show the minimap.",
-        "NAME": "Show MiniMap"
+        "NAME": "Toggle MiniMap",
+        "HINT": "Show or hide the minimap."
       },
       "BGCOLOR": {
         "NAME": "Background Color",

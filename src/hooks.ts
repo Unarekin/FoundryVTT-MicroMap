@@ -1,5 +1,10 @@
 import { log, logError } from "./logging";
 import { MiniatureMapCanvasGroup } from './MiniatureMapCanvasGroup';
+import { registerKeyBindings } from "./keybindings";
+
+Hooks.once("init", () => {
+  registerKeyBindings();
+})
 
 Hooks.once("canvasReady", () => {
   try {

@@ -710,16 +710,16 @@ export class MiniMap {
           this.visible = !!game.settings.get(__MODULE_ID__, "show");
           this.position = game.settings.get(__MODULE_ID__, "position") as MapPosition;
           this.shape = game.settings.get(__MODULE_ID__, "shape") as MapShape;
-          this.padding = game.settings.get(__MODULE_ID__, "padding") as number;
-          this.mask = game.settings.get(__MODULE_ID__, "mask") as string;
-          this.bgColor = game.settings.get(__MODULE_ID__, "bgColor") as string;
+          this.padding = game.settings.get(__MODULE_ID__, "padding");
+          this.mask = game.settings.get(__MODULE_ID__, "mask");
+          this.bgColor = game.settings.get(__MODULE_ID__, "bgColor");
 
-          this.height = game.settings.get(__MODULE_ID__, "height") as number;
-          this.width = game.settings.get(__MODULE_ID__, "width") as number;
+          this.height = game.settings.get(__MODULE_ID__, "height");
+          this.width = game.settings.get(__MODULE_ID__, "width");
 
           this.mode = game.settings.get(__MODULE_ID__, "mode") as MapMode;
-          this.image = game.settings.get(__MODULE_ID__, "image") as string;
-          this.scene = game.settings.get(__MODULE_ID__, "scene") as string;
+          this.image = game.settings.get(__MODULE_ID__, "image");
+          this.scene = game.settings.get(__MODULE_ID__, "scene");
 
           this.allowPan = game.settings.get(__MODULE_ID__, "unlockPlayers") as boolean;
           this.allowZoom = game.settings.get(__MODULE_ID__, "unlockPlayers") as boolean;
@@ -734,7 +734,7 @@ export class MiniMap {
             this.zoom = view.zoom;
           }
 
-          const overlaySettings = game.settings.get(__MODULE_ID__, "overlaySettings") as OverlaySettings;
+          const overlaySettings = game.settings.get(__MODULE_ID__, "overlaySettings");
           this.setOverlayFromSettings(overlaySettings);
           this.setMask(this.shape);
         } catch (err) {

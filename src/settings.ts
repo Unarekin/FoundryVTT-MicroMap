@@ -1,18 +1,39 @@
 import { getGame, getMiniMap, localize } from "./utils";
 import { log, logError } from "./logging";
 import { MiniMap } from "MiniMap";
-import { MapPosition, MapShape, OverlaySettings, MapMode } from './types';
+import { MapPosition, MapShape, OverlaySettings, MapMode, MapView } from './types';
 import { OverlaySettingsApplication } from "./applications";
 import { synchronizeView } from "sockets";
+
+declare global {
+  interface SettingConfig {
+    "micro-map.enable": boolean;
+    "micro-map.show": boolean;
+    "micro-map.unlockPlayers": boolean;
+    "micro-map.lockGMView": boolean;
+    "micro-map.mode": MapMode;
+    "micro-map.image": string;
+    "micro-map.scene": string;
+    "micro-map.position": MapPosition;
+    "micro-map.bgColor": string;
+    "micro-map.padding": number;
+    "micro-map.width": number;
+    "micro-map.height": number;
+    "micro-map.shape": MapShape;
+    "micro-map.mask": string;
+    "micro-map.overlaySettings": OverlaySettings;
+    "micro-map.view": MapView;
+  }
+}
 
 Hooks.once("init", () => {
 
   getGame()
     .then(game => {
       // Register settings
-      game.settings.register(__MODULE_ID__, "show", {
-        name: "MINIMAP.SETTINGS.SHOW.NAME",
-        hint: "MINIMAP.SETTINGS.SHOW.HINT",
+      game.settings.register(__MODULE_ID__, "enable", {
+        name: "MINIMAP.SETTINGS.ENABLE.NAME",
+        hint: "MINIMAP.SETTINGS.ENABLE.HINT",
         config: true,
         scope: "world",
         type: Boolean,
@@ -21,9 +42,24 @@ Hooks.once("init", () => {
         onChange(value: boolean) {
           const map = getMiniMap();
           if (!(map instanceof MiniMap)) return;
-          map.visible = value;
+          map.visible = value && game.settings.get(__MODULE_ID__, "show");
         }
       });
+
+      game.settings.register(__MODULE_ID__, "show", {
+        name: "MINIMAP.SETTINGS.SHOW.NAME",
+        hint: "MINIMAP.SETTINGS.SHOW.HINT",
+        config: true,
+        scope: "client",
+        type: Boolean,
+        default: true,
+        requiresReload: false,
+        onChange(value: boolean) {
+          const map = getMiniMap();
+          if (!(map instanceof MiniMap)) return;
+          map.visible = value && game.settings.get(__MODULE_ID__, "enable");
+        }
+      })
 
       game.settings.register(__MODULE_ID__, "unlockPlayers", {
         name: "MINIMAP.SETTINGS.UNLOCKPLAYERS.NAME",
@@ -85,9 +121,9 @@ Hooks.once("init", () => {
         config: true,
         scope: "world",
         type: String,
+        filePicker: "image",
         default: "",
         requiresReload: false,
-        filePicker: "image",
         required: false,
         onChange(value: string) {
           const map = getMiniMap();
@@ -105,7 +141,7 @@ Hooks.once("init", () => {
           idOnly: true,
           blank: true
         }),
-        default: null,
+        default: undefined,
         requiresReload: false,
         onChange(id: string) {
           const map = getMiniMap();
@@ -171,7 +207,6 @@ Hooks.once("init", () => {
         scope: "world",
         type: Number,
         default: 256,
-        min: 0,
         step: 1,
         required: true,
         onChange(width: number) {
@@ -187,7 +222,6 @@ Hooks.once("init", () => {
         scope: "world",
         type: Number,
         default: 256,
-        min: 0,
         step: 1,
         required: true,
         onChange(height: number) {
@@ -248,7 +282,7 @@ Hooks.once("init", () => {
         config: false,
         type: Object,
         default: {
-          show: true,
+          visible: true,
           file: "",
           left: 0,
           right: 0,
@@ -324,8 +358,8 @@ Hooks.on("renderSettingsConfig", async (config: foundry.applications.settings.Se
     const widthField = new foundry.data.fields.NumberField(game.settings.settings.get(`${__MODULE_ID__}.width`));
     const heightField = new foundry.data.fields.NumberField(game.settings.settings.get(`${__MODULE_ID__}.height`));
 
-    const widthElem = widthField.toFormGroup({ label: "Width", localize: true }, { value: game.settings.get(__MODULE_ID__, "width") as number, name: `${__MODULE_ID__}.width`, id: `settings-config-${__MODULE_ID__}.width` });
-    const heightElem = heightField.toFormGroup({ label: "Height", localize: true }, { value: game.settings.get(__MODULE_ID__, "height") as number, name: `${__MODULE_ID__}.height`, id: `settings-config-${__MODULE_ID__}.height` });
+    const widthElem = widthField.toFormGroup({ label: "Width", localize: true }, { value: game.settings.get(__MODULE_ID__, "width"), name: `${__MODULE_ID__}.width`, id: `settings-config-${__MODULE_ID__}.width` });
+    const heightElem = heightField.toFormGroup({ label: "Height", localize: true }, { value: game.settings.get(__MODULE_ID__, "height"), name: `${__MODULE_ID__}.height`, id: `settings-config-${__MODULE_ID__}.height` });
 
     dimensions.innerHTML = `<label>${localize("TOKEN.Dimensions")}</label>
   <div class="form-fields">
