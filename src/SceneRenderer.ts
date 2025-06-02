@@ -154,6 +154,10 @@ export class SceneRenderer {
       const texture = PIXI.Texture.from(doc.texture.src);
       const sprite = new PIXI.Sprite(texture);
 
+      // Ensure that a video texture is playing and loops
+      if (texture.baseTexture.resource instanceof PIXI.VideoResource)
+        game.video?.play(texture.baseTexture.resource.source, { loop: true });
+
       sprite.name = doc.name ?? doc.uuid;
       this.sprites[doc.uuid] = sprite;
       this.container.addChild(sprite);
@@ -168,6 +172,14 @@ export class SceneRenderer {
       if (!this.shouldProcessDocument(doc)) return;
       const sprite = this.getSprite(doc);
       if (!sprite) return;
+
+      if (typeof delta?.texture?.src === "string") {
+        // Texture was changed
+        const texture = PIXI.Texture.from(delta.texture.src);
+        const oldTexture = sprite.texture;
+        sprite.texture = texture;
+        oldTexture.destroy();
+      }
 
       sprite.tint = delta.texture?.tint ?? (doc.texture.tint ?? "#FFFFFF");
 
