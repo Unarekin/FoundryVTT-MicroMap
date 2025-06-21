@@ -16,13 +16,14 @@ declare global {
     "micro-map.scene": string;
     "micro-map.position": MapPosition;
     "micro-map.bgColor": string;
-    "micro-map.padding": number;
     "micro-map.width": number;
     "micro-map.height": number;
     "micro-map.shape": MapShape;
     "micro-map.mask": string;
     "micro-map.overlaySettings": OverlaySettings;
     "micro-map.view": MapView;
+    "micro-map.padX": number;
+    "micro-map.padY": number;
   }
 }
 
@@ -185,21 +186,49 @@ Hooks.once("init", () => {
         }
       })
 
-      game.settings.register(__MODULE_ID__, "padding", {
-        name: "MINIMAP.SETTINGS.PADDING.NAME",
-        hint: "MINIMAP.SETTINGS.PADDING.HINT",
-        config: true,
+      game.settings.register(__MODULE_ID__, "padX", {
+        name: "",
+        config: false,
         scope: "world",
         type: Number,
         default: 0,
         requiresReload: false,
-        required: true,
-        onChange(value: number) {
+        onChange(value) {
           const map = getMiniMap();
           if (!(map instanceof MiniMap)) return;
-          map.padding = value;
+          map.padding.x = value;
         }
       });
+
+      game.settings.register(__MODULE_ID__, "padY", {
+        name: "",
+        config: false,
+        scope: "world",
+        type: Number,
+        default: 0,
+        requiresReload: false,
+        onChange(value) {
+          const map = getMiniMap();
+          if (!(map instanceof MiniMap)) return;
+          map.padding.y = value;
+        }
+      })
+
+      // game.settings.register(__MODULE_ID__, "padding", {
+      //   name: "MINIMAP.SETTINGS.PADDING.NAME",
+      //   // hint: "MINIMAP.SETTINGS.PADDING.HINT",
+      //   config: true,
+      //   scope: "world",
+      //   type: Object,
+      //   default: { x: 0, y: 0 },
+      //   requiresReload: false,
+      //   required: true,
+      //   onChange(value) {
+      //     const map = getMiniMap();
+      //     if (!(map instanceof MiniMap)) return;
+      //     map.padding = value;
+      //   },
+      // });
 
       game.settings.register(__MODULE_ID__, "width", {
         name: "Width",
@@ -348,12 +377,14 @@ Hooks.on("renderSettingsConfig", async (config: foundry.applications.settings.Se
   const height = element.querySelector(`.form-group:has([name="${__MODULE_ID__}.height"])`);
   if (height instanceof HTMLElement) height.remove();
 
+  const padding = element.querySelector(`.form-group:has([name="${__MODULE_ID__}.padding"])`);
+  if (padding instanceof HTMLElement) padding.remove();
+
   // We will inject a new form group after the position element
   const pos = element.querySelector(`.form-group:has([name="${__MODULE_ID__}.position"])`);
   if (pos instanceof HTMLElement) {
     const dimensions = document.createElement("div");
-    dimensions.classList.add("form-group");
-    dimensions.classList.add("slim");
+    dimensions.classList.add("form-group", "slim");
 
     const widthField = new foundry.data.fields.NumberField(game.settings.settings.get(`${__MODULE_ID__}.width`));
     const heightField = new foundry.data.fields.NumberField(game.settings.settings.get(`${__MODULE_ID__}.height`));
@@ -368,6 +399,25 @@ Hooks.on("renderSettingsConfig", async (config: foundry.applications.settings.Se
   </div>`;
 
     pos.after(dimensions);
+
+    const padding = document.createElement("div");
+    padding.classList.add("form-group", "slim");
+
+
+    const padXField = new foundry.data.fields.NumberField(game.settings.settings.get(`${__MODULE_ID__}.padX`))
+    const padYField = new foundry.data.fields.NumberField(game.settings.settings.get(`${__MODULE_ID__}.padY`));
+
+    const padXElem = padXField.toFormGroup({ label: "MINIMAP.SETTINGS.PADDING.X", localize: true }, { value: game.settings.get(__MODULE_ID__, "padX"), name: `${__MODULE_ID__}.padX`, id: `settings-config-${__MODULE_ID__}.padX` });
+    const padYElem = padYField.toFormGroup({ label: "MINIMAP.SETTINGS.PADDING.Y", localize: true }, { value: game.settings.get(__MODULE_ID__, "padY"), name: `${__MODULE_ID__}.padY`, id: `settings-config-${__MODULE_ID__}.padY` });
+
+
+    padding.innerHTML = `<label>${localize("MINIMAP.SETTINGS.PADDING.NAME")}</label>
+    <div class="form-fields">
+    ${padXElem.innerHTML}
+    ${padYElem.innerHTML}
+    </div>`;
+
+    dimensions.after(padding);
   }
 
 });

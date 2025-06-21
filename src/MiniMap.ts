@@ -29,7 +29,6 @@ export class MiniMap {
   private _position: MapPosition = "bottomRight";
   private _width = 300;
   private _height = 200;
-  private _padding = 0;
   private _mask = "";
   private _bgColor = "#000000";
   private _panX = 0;
@@ -37,6 +36,7 @@ export class MiniMap {
   private _zoom = 1;
   private _allowPan = true;
   private _allowZoom = true;
+  private _padding = new PIXI.ObservablePoint(() => { this.update(); }, undefined, 0, 0);
 
   public lockGMView = false;
 
@@ -166,14 +166,6 @@ export class MiniMap {
     }
   }
 
-  public get padding() { return this._padding; }
-  public set padding(val) {
-    if (val !== this.padding) {
-      this._padding = val;
-      this.update();
-    }
-  }
-
   public get visible() { return this.container.visible; }
   public set visible(val) {
     if (val !== this.visible) {
@@ -225,6 +217,14 @@ export class MiniMap {
       void this.updateView();
       this.update();
     }
+  }
+
+  public get padding(): PIXI.ObservablePoint { return this._padding; }
+  public set padding(val: { x: number, y: number } | number) {
+    if (typeof val === "number") this.padding.set(val, val)
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    else if (val instanceof PIXI.ObservablePoint) this._padding = val;
+    else this.padding.set(val.x ?? 0, val.y ?? 0);
   }
 
   protected get screenTop() {
@@ -293,23 +293,22 @@ export class MiniMap {
     this.#mapContainer.y = this.panY;
 
     if (this.container?.parent) {
-      // TODO: Account for UI elements
       switch (this.position) {
         case "bottomLeft":
-          this.container.x = this.screenLeft + this.padding;
-          this.container.y = this.screenBottom - this.padding;
+          this.container.x = this.screenLeft + this.padding.x;
+          this.container.y = this.screenBottom - this.padding.y;
           break;
         case "bottomRight":
-          this.container.x = this.screenRight - this.padding;
-          this.container.y = this.screenBottom - this.padding;
+          this.container.x = this.screenRight - this.padding.x;
+          this.container.y = this.screenBottom - this.padding.y;
           break;
         case "topLeft":
-          this.container.x = this.screenLeft + this.padding;
-          this.container.y = this.screenTop + this.padding;
+          this.container.x = this.screenLeft + this.padding.x;
+          this.container.y = this.screenTop + this.padding.y;
           break;
         case "topRight":
-          this.container.x = this.screenRight - this.padding;
-          this.container.y = this.screenTop + this.padding;
+          this.container.x = this.screenRight - this.padding.x;
+          this.container.y = this.screenTop + this.padding.y;
           break;
       }
     }
@@ -710,7 +709,10 @@ export class MiniMap {
           this.visible = !!game.settings.get(__MODULE_ID__, "show");
           this.position = game.settings.get(__MODULE_ID__, "position") as MapPosition;
           this.shape = game.settings.get(__MODULE_ID__, "shape") as MapShape;
-          this.padding = game.settings.get(__MODULE_ID__, "padding");
+          // this.padding = game.settings.get(__MODULE_ID__, "padding");
+          this.padding.x = game.settings.get(__MODULE_ID__, "padX") ?? 0;
+          this.padding.y = game.settings.get(__MODULE_ID__, "padY") ?? 0;
+
           this.mask = game.settings.get(__MODULE_ID__, "mask");
           this.bgColor = game.settings.get(__MODULE_ID__, "bgColor");
 

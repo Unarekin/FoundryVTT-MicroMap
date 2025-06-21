@@ -28,7 +28,9 @@
       },
       "PADDING": {
         "HINT": "Space, in pixels, from the edge of the canvas area.",
-        "NAME": "Padding"
+        "NAME": "Padding",
+        "X": "X",
+        "Y": "Y"
       },
       "POSITION": {
         "BOTTOMLEFT": "Bottom Left",
