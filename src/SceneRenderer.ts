@@ -1,6 +1,8 @@
 import { logError } from 'logging';
 import { coerceScene } from './coercion';
 
+type SceneDocument = TileDocument | TokenDocument | DrawingDocument;
+
 export class SceneRenderer {
   private _active = false;
 
@@ -28,7 +30,7 @@ export class SceneRenderer {
     }
   }
 
-  private shouldProcessDocument(doc: TileDocument | TokenDocument): boolean {
+  private shouldProcessDocument(doc: SceneDocument): boolean {
     if (!this.active) return false;
     if (!(doc.parent instanceof Scene)) return false;
     if (doc.parent !== this.scene) return false;
@@ -138,6 +140,7 @@ export class SceneRenderer {
       // Add tokens and tiles
       this.scene.tokens.forEach(doc => { this.documentAdded(doc); });
       this.scene.tiles.forEach(doc => { this.documentAdded(doc); });
+      this.scene.drawings.forEach(doc => { this.documentAdded(doc); });
 
       this.sceneUpdated();
     } catch (err) {
@@ -145,18 +148,142 @@ export class SceneRenderer {
     }
   }
 
-  private documentAdded(doc: TileDocument | TokenDocument) {
+  private createTileTokenTexture(doc: TileDocument | TokenDocument): PIXI.Texture | undefined {
+    if (!this.shouldProcessDocument(doc)) return;
+    if (!doc.texture.src) return;
+
+    const texture = PIXI.Texture.from(doc.texture.src);
+    // Ensure that a video texture is playing and loops
+    if (texture.baseTexture.resource instanceof PIXI.VideoResource)
+      game.video?.play(texture.baseTexture.resource.source, { loop: true });
+
+    return texture;
+  }
+
+  private createTileTokenSprite(doc: TileDocument | TokenDocument): PIXI.Sprite | undefined {
+    const texture = this.createTileTokenTexture(doc);
+    if (!texture) return;
+    return new PIXI.Sprite(texture);
+  }
+
+  private createDrawingTexture(doc: DrawingDocument): PIXI.Texture | undefined {
+    const graphics = new PIXI.Graphics();
+
+    graphics.clear();
+    // Set lineStyle
+    graphics.lineStyle({
+      width: doc.strokeWidth,
+      alpha: doc.strokeAlpha,
+      color: doc.strokeColor
+    });
+
+    // Begin texture fill
+    const fillStyle: Record<string, unknown> = {
+      color: doc.fillColor,
+      alpha: doc.fillAlpha
+    };
+
+    if (doc.fillType === CONST.DRAWING_FILL_TYPES.PATTERN && doc.texture) {
+      const texture = PIXI.Texture.from(doc.texture);
+      if (!texture.valid) {
+        texture.baseTexture.once("loaded", () => {
+          this.documentUpdated(doc);
+        });
+        return;
+      }
+
+      fillStyle.texture = texture;
+    } else if (!doc.fillType) {
+      fillStyle.alpha = 0;
+    }
+
+    // if (doc.fillType === CONST.DRAWING_FILL_TYPES.PATTERN && doc.texture) fillStyle.texture = doc.texture;
+    // else if (!doc.fillType) fillStyle.alpha = 0;
+
+    graphics.beginTextureFill(fillStyle);
+
+
+
+    switch (doc.shape.type) {
+      case Drawing.SHAPE_TYPES.CIRCLE: {
+        break;
+      }
+      case Drawing.SHAPE_TYPES.ELLIPSE: {
+        graphics.drawEllipse(
+          (doc.shape.width ?? 0) / 2,
+          (doc.shape.height ?? 0) / 2,
+          (doc.shape.width ?? 0) / 2,
+          (doc.shape.height ?? 0) / 2
+        )
+        break;
+      }
+      case Drawing.SHAPE_TYPES.POLYGON: {
+        const isClosed = doc.fillType || (doc.shape.points.slice(0, 2).equals(doc.shape.points.slice(-2)));
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        if (isClosed) graphics.drawSmoothedPolygon(doc.shape.points as any, (doc.bezierFactor ?? 0) * 2);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        else graphics.drawSmoothedPath(doc.shape.points as any, (doc.bezierFactor ?? 0) * 2);
+        break;
+      }
+      case Drawing.SHAPE_TYPES.RECTANGLE: {
+        graphics.drawRect(
+          0, 0,
+          (doc.shape.width ?? 0) / 2,
+          (doc.shape.height ?? 0) / 2
+        );
+        break;
+      }
+    }
+
+    graphics.endFill();
+    return canvas?.app?.renderer.generateTexture(graphics);
+  }
+
+  private updateDrawingText(doc: DrawingDocument) {
+    const sprite = this.getSprite(doc);
+    if (!sprite) return;
+
+    if (doc.text) {
+      const text = sprite.children.find(item => item instanceof PreciseText) ?? new PreciseText(doc.text);
+      text.alpha = doc.textAlpha;
+      const { fontSize, fontFamily, textColor } = doc;
+      const stroke = Math.max(Math.round((fontSize ?? 0) / 32), 2);
+      const textStyle = PreciseText.getTextStyle({
+        fontFamily: fontFamily ?? CONFIG.defaultFontFamily,
+        fontSize,
+        fill: textColor,
+        strokeThickness: stroke,
+        dropShadowBlur: Math.max(Math.round((fontSize ?? 0) / 16), 2),
+        align: "center",
+        wordWrap: true,
+        wordWrapWidth: doc.shape.width ?? 0,
+        padding: stroke * 4
+      });
+      text.style = textStyle;
+      text.anchor.x = text.anchor.y = 0.5;
+
+      sprite.addChild(text);
+    } else {
+      const text = sprite.children.find(item => item instanceof PreciseText);
+      if (text) text.destroy();
+    }
+  }
+
+  private createDrawingSprite(doc: DrawingDocument): PIXI.Sprite | undefined {
+    const texture = this.createDrawingTexture(doc);
+    if (texture) {
+      const sprite = new PIXI.Sprite(texture);
+      return sprite;
+    }
+  }
+
+  private documentAdded(doc: SceneDocument) {
     try {
       if (!this.shouldProcessDocument(doc)) return;
-      if (!doc.texture.src) return;
 
       // Create sprite
-      const texture = PIXI.Texture.from(doc.texture.src);
-      const sprite = new PIXI.Sprite(texture);
-
-      // Ensure that a video texture is playing and loops
-      if (texture.baseTexture.resource instanceof PIXI.VideoResource)
-        game.video?.play(texture.baseTexture.resource.source, { loop: true });
+      const sprite = doc instanceof DrawingDocument ? this.createDrawingSprite(doc) : this.createTileTokenSprite(doc);
+      if (!sprite) return;
 
       sprite.name = doc.name ?? doc.uuid;
       this.sprites[doc.uuid] = sprite;
@@ -167,72 +294,81 @@ export class SceneRenderer {
     }
   }
 
-  private documentUpdated(doc: TileDocument | TokenDocument, delta: Partial<TileDocument> | Partial<TokenDocument>) {
+  private documentUpdated<t extends SceneDocument>(doc: t, delta?: Partial<t>): void {
     try {
       if (!this.shouldProcessDocument(doc)) return;
       const sprite = this.getSprite(doc);
       if (!sprite) return;
 
-      if (typeof delta?.texture?.src === "string") {
-        // Texture was changed
-        const texture = PIXI.Texture.from(delta.texture.src);
-        const oldTexture = sprite.texture;
-        sprite.texture = texture;
-        oldTexture.destroy();
+
+
+      if (doc instanceof TileDocument || doc instanceof TokenDocument) {
+        if (typeof (delta as Partial<TileDocument> | Partial<TokenDocument>)?.texture?.src === "string") {
+          // Texture was changed
+          const texture = this.createTileTokenTexture(doc);
+          if (texture) {
+            const oldTexture = sprite.texture;
+            sprite.texture = texture;
+            if (oldTexture) oldTexture.destroy();
+          }
+        }
+
+        const actualDelta = delta as Partial<TileDocument> | Partial<TokenDocument> | undefined;
+        // Perform updates that aren't supported by other document types (drawings)
+        sprite.tint = actualDelta?.texture?.tint ?? (doc.texture.tint ?? "#FFFFFF");
+
+        const scaleX = actualDelta?.texture?.scaleX ?? doc.texture?.scaleX ?? 1;
+        const scaleY = actualDelta?.texture?.scaleY ?? doc.texture?.scaleY ?? 1;
+
+        if (scaleX < 0 && sprite.scale.x > 0) sprite.scale.x *= -1;
+        else if (scaleX > 0 && sprite.scale.x < 0) sprite.scale.x *= -1;
+
+        if (scaleY < 0 && sprite.scale.y > 0) sprite.scale.y *= -1;
+        else if (scaleY > 0 && sprite.scale.y < 0) sprite.scale.y *= -1;
+
+        sprite.alpha = actualDelta?.alpha ?? doc.alpha;
+
+
+      } else if (doc instanceof DrawingDocument) {
+        const texture = this.createDrawingTexture(doc);
+        if (texture) {
+          const oldTexture = sprite.texture;
+          sprite.texture = texture;
+          if (oldTexture) oldTexture.destroy();
+        }
+
+        sprite.height = doc.shape.height ?? 0;
+        sprite.width = doc.shape.width ?? 0;
+
+        this.updateDrawingText(doc);
       }
-
-      sprite.tint = delta.texture?.tint ?? (doc.texture.tint ?? "#FFFFFF");
-
-      sprite.x = (typeof delta.x === "number" ? delta.x : doc.x) - this.scene!.dimensions.sceneX;
-      sprite.y = (typeof delta.y === "number" ? delta.y : doc.y) - this.scene!.dimensions.sceneY;
-      sprite.zIndex = (typeof delta.sort === "number" ? delta.sort : doc.sort);
+      sprite.x = (typeof delta?.x === "number" ? delta.x : doc.x) - this.scene!.dimensions.sceneX;
+      sprite.y = (typeof delta?.y === "number" ? delta.y : doc.y) - this.scene!.dimensions.sceneY;
+      sprite.zIndex = (typeof delta?.sort === "number" ? delta.sort : doc.sort);
 
       const gridSize = this.scene!.grid.size;   // Our shoudlProcessDocument call earlier ensures scene is not null
 
-      sprite.renderable = !(delta.hidden ?? doc.hidden);
-      sprite.alpha = delta.alpha ?? doc.alpha;
+      sprite.renderable = !(delta?.hidden ?? doc.hidden);
 
       if (doc instanceof TokenDocument) {
-        sprite.width = ((typeof delta.width === "number" ? delta.width : doc.width) ?? 1) * gridSize;
-        sprite.height = ((typeof delta.height === "number" ? delta.height : doc.height) ?? 1) * gridSize;
+        sprite.width = ((typeof (delta as Partial<TokenDocument>)?.width === "number" ? (delta as Partial<TokenDocument>)?.width ?? 0 : doc.width) ?? 1) * gridSize;
+        sprite.height = ((typeof (delta as Partial<TokenDocument>)?.height === "number" ? (delta as Partial<TokenDocument>)?.height ?? 0 : doc.height) ?? 1) * gridSize;
       } else if (doc instanceof TileDocument) {
-        sprite.width = delta.width ?? doc.width;
-        sprite.height = delta.height ?? doc.height;
+        sprite.width = (delta as Partial<TileDocument>)?.width ?? doc.width;
+        sprite.height = (delta as Partial<TileDocument>)?.height ?? doc.height;
       }
-
-      const scaleX = delta?.texture?.scaleX ?? doc.texture?.scaleX ?? 1;
-      const scaleY = delta?.texture?.scaleY ?? doc.texture?.scaleY ?? 1;
-
-      if (scaleX < 0 && sprite.scale.x > 0) sprite.scale.x *= -1;
-      else if (scaleX > 0 && sprite.scale.x < 0) sprite.scale.x *= -1;
-
-      if (scaleY < 0 && sprite.scale.y > 0) sprite.scale.y *= -1;
-      else if (scaleY > 0 && sprite.scale.y < 0) sprite.scale.y *= -1;
-
-      // if (sprite.scale.x < 0) sprite.x += sprite.width;
-      // if (sprite.scale.y < 0) sprite.y += sprite.height;
 
       sprite.anchor.x = sprite.anchor.y = 0.5;
       sprite.x += sprite.width * sprite.anchor.x;
       sprite.y += sprite.height * sprite.anchor.y;
-      // sprite.x += (sprite.width / 2);
-      // sprite.y += (sprite.height / 2);
 
-      // if (doc instanceof TokenDocument) {
-      //   sprite.x += (sprite.width / 2) * sprite.scale.x;
-      //   sprite.y += (sprite.height / 2) * sprite.scale.y;
-      // } else {
-      //   sprite.x += sprite.width / 2;
-      //   sprite.y += sprite.height / 2;
-      // }
-
-      sprite.angle = delta.rotation ?? doc.rotation;
+      sprite.angle = delta?.rotation ?? doc.rotation;
 
     } catch (err) {
       logError(err as Error);
     }
   }
-  private documentRemoved(doc: TileDocument | TokenDocument) {
+  private documentRemoved(doc: SceneDocument) {
     if (!this.shouldProcessDocument(doc)) return;
 
     const sprite = this.getSprite(doc);
@@ -267,5 +403,9 @@ export class SceneRenderer {
     Hooks.on("createTile", (tile: TileDocument) => { this.documentAdded(tile); });
     Hooks.on("deleteTile", (tile: TileDocument) => { this.documentRemoved(tile); });
     Hooks.on("updateTile", (tile: TileDocument, delta: Partial<TileDocument>) => { this.documentUpdated(tile, delta); });
+
+    Hooks.on("createDrawing", (drawing: DrawingDocument) => { this.documentAdded(drawing); });
+    Hooks.on("deleteDrawing", (drawing: DrawingDocument) => { this.documentRemoved(drawing); });
+    Hooks.on("updateDrawing", (drawing: DrawingDocument, delta: Partial<DrawingDocument>) => { this.documentUpdated(drawing, delta); });
   }
 }
