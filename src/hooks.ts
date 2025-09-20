@@ -1,9 +1,24 @@
 import { log, logError } from "./logging";
 import { MiniatureMapCanvasGroup } from './MiniatureMapCanvasGroup';
 import { registerKeyBindings } from "./keybindings";
+import { NoteConfigV2Mixin } from "applications";
+import { getGame } from "utils";
 
 Hooks.once("init", () => {
   registerKeyBindings();
+});
+
+Hooks.once("ready", () => {
+  getGame()
+    .then(game => {
+      const oldClass = CONFIG.Note.sheetClasses.base["core.NoteConfig"].cls;
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      const mixed = game.release.isNewer("13") ? NoteConfigV2Mixin(oldClass as any) : null;
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      if (mixed) CONFIG.Note.sheetClasses.base["core.NoteConfig"].cls = mixed as any;
+    }).catch(logError);
+
 })
 
 Hooks.once("canvasReady", () => {

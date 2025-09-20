@@ -1,3 +1,5 @@
 {
-  "MINIMAP": {}
+  "MINIMAP": {
+    "TITLE": "MicroMap"
+  }
 }

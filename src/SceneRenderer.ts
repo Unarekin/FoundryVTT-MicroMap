@@ -1,6 +1,7 @@
 import { logError } from 'logging';
 import { coerceScene } from './coercion';
 import { DeepPartial } from 'types';
+import { getNoteFlags } from 'utils';
 
 type SceneDocument = TileDocument | TokenDocument | DrawingDocument | NoteDocument;
 
@@ -181,19 +182,26 @@ export class SceneRenderer {
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     const s = (canvas?.dimensions as any)?.uiScale as number ?? 1;
+
     const rect = [-2 * s, -2 * s, doc.iconSize + (4 * s), doc.iconSize + (4 * s)];
 
     const sprite = new PIXI.Sprite();
 
-    const bg = sprite.addChild(new PIXI.Graphics());
-    bg.beginFill(0x000000, 0.4);
-    bg.lineStyle(2 * s, 0x000000, 1.0);
-    bg.drawRoundedRect(rect[0], rect[1], rect[2], rect[3], 5 * s);
-    bg.endFill();
+
+    const flags = getNoteFlags(doc);
+    if (flags.showBG) {
+      const bg = sprite.addChild(new PIXI.Graphics());
+      bg.name = "bg";
+      bg.beginFill(0x000000, 0.4);
+      bg.lineStyle(2 * s, 0x000000, 1.0);
+      bg.drawRoundedRect(rect[0], rect[1], rect[2], rect[3], 5 * s);
+      bg.endFill();
+    }
 
     const icon = sprite.addChild(new PIXI.Sprite(iconTexture));
     icon.tint = doc.texture.tint ?? 0xffffff;
     icon.width = icon.height = doc.iconSize;
+    icon.name = "icon"
 
     return canvas.app?.renderer.generateTexture(sprite);
   }
@@ -316,16 +324,21 @@ export class SceneRenderer {
     const sprite = this.getSprite(doc);
     if (!sprite) return;
 
+    const flags = getNoteFlags(doc);
+
     const text = sprite.children.find(child => child instanceof PreciseText) ?? sprite.addChild(new PreciseText());
+
+    text.name = "label"
     text.text = doc.text ?? "";
     text.anchor.set(0.5, 1);
     // text.scale.set(5, 5);
     text.style = CONFIG.canvasTextStyle;
     text.y = sprite.height;
+
     // // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     // const s = (canvas?.dimensions as any)?.uiScale as number ?? 1;
     // text.position.set(doc.iconSize / 2, -12 * s);
-
+    text.renderable = flags.showLabel;
   }
 
   private createDrawingSprite(doc: DrawingDocument): PIXI.Sprite | undefined {
@@ -343,7 +356,8 @@ export class SceneRenderer {
     // If they're a GM, always show this
     if (actualUser.isGM) return true;
 
-    return note.global;
+    const flags = getNoteFlags(note);
+    return flags.show;
   }
 
   private documentAdded(doc: SceneDocument) {
@@ -420,10 +434,13 @@ export class SceneRenderer {
 
         this.updateDrawingText(doc);
       } else if (doc instanceof NoteDocument) {
-        if ((delta as DeepPartial<NoteDocument>)?.texture?.src) {
-          const texture = this.createNoteTexture(doc);
-          if (texture) sprite.texture = texture;
+        const texture = this.createNoteTexture(doc);
+        if (texture) {
+          const oldTexture = sprite.texture;
+          sprite.texture = texture;
+          oldTexture.destroy();
         }
+        sprite.renderable = this.canSeeNote(doc);
         this.updateNoteText(doc);
       }
 

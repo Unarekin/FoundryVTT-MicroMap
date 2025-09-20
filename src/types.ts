@@ -43,3 +43,16 @@ export type DeepPartial<T> = T extends unknown
 
 export type AnyArray = readonly unknown[];
 export type AnyFunction = (arg0: never, ...args: never[]) => unknown;
+
+
+export interface NoteFlags {
+  show: boolean;
+  showBG: boolean;
+  showLabel: boolean;
+}
+
+export const DefaultNoteFlags: NoteFlags = {
+  show: false,
+  showBG: true,
+  showLabel: false
+}
