@@ -162,8 +162,8 @@ export class SceneRenderer {
         ...this.scene.drawings.contents,
         ...this.scene.notes.contents
       ]
-      log("Elements");
-      console.table(elements.map(element => ({ name: element.name, type: element.documentName, elevation: element.elevation, sort: element.sort })));
+      // log("Elements");
+      // console.table(elements.map(element => ({ name: element.name, type: element.documentName, elevation: element.elevation, sort: element.sort })));
       const sorted = elements.sort((a, b) => {
         // Notes come above everything
         if (a instanceof NoteDocument && !(b instanceof NoteDocument)) return -1;
@@ -195,8 +195,8 @@ export class SceneRenderer {
         // They are the same type of thing at the same elevation.  Sort by their sort property
         return b.sort - a.sort;
       }).reverse();
-      log("Sorted:");
-      console.table(elements.map(element => ({ name: element.name, type: element.documentName, elevation: element.elevation, sort: element.sort })));
+      // log("Sorted:");
+      // console.table(elements.map(element => ({ name: element.name, type: element.documentName, elevation: element.elevation, sort: element.sort })));
       sorted.forEach((item, i) => {
         const sprite = this.getSprite(item);
         if (sprite) sprite.zIndex = i;
