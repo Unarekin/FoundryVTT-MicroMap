@@ -3,7 +3,7 @@ import { NoteFlags } from "../types";
 import { getNoteFlags } from "utils";
 
 export function NoteConfigV2Mixin(Base: typeof foundry.applications.sheets.NoteConfig) {
-  class Mixed extends Base {
+  return class NoteConfigV2 extends Base {
 
     async _onRender(context: foundry.applications.sheets.NoteConfig.RenderContext, options: foundry.applications.api.ApplicationV2.RenderOptions) {
       await super._onRender(context, options);
@@ -43,6 +43,4 @@ export function NoteConfigV2Mixin(Base: typeof foundry.applications.sheets.NoteC
     //   super(options);
     // }
   }
-
-  return Mixed;
 }
