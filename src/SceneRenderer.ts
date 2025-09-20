@@ -1,7 +1,8 @@
 import { logError } from 'logging';
 import { coerceScene } from './coercion';
+import { DeepPartial } from 'types';
 
-type SceneDocument = TileDocument | TokenDocument | DrawingDocument;
+type SceneDocument = TileDocument | TokenDocument | DrawingDocument | NoteDocument;
 
 export class SceneRenderer {
   private _active = false;
@@ -141,6 +142,7 @@ export class SceneRenderer {
       this.scene.tokens.forEach(doc => { this.documentAdded(doc); });
       this.scene.tiles.forEach(doc => { this.documentAdded(doc); });
       this.scene.drawings.forEach(doc => { this.documentAdded(doc); });
+      this.scene.notes.forEach(doc => { this.documentAdded(doc); });
 
       this.sceneUpdated();
     } catch (err) {
@@ -164,6 +166,47 @@ export class SceneRenderer {
     const texture = this.createTileTokenTexture(doc);
     if (!texture) return;
     return new PIXI.Sprite(texture);
+  }
+
+  createNoteTexture(doc: NoteDocument): PIXI.Texture | undefined {
+    if (!this.shouldProcessDocument(doc)) return;
+    if (!(doc.texture.src)) return;
+
+    const iconTexture = PIXI.Texture.from(doc.texture.src);
+
+    // Delay until icon texture is loaded
+    if (!(iconTexture.valid))
+      iconTexture.baseTexture.once("loaded", () => { this.documentUpdated(doc, { texture: { src: doc.texture.src } }); });
+
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const s = (canvas?.dimensions as any)?.uiScale as number ?? 1;
+    const rect = [-2 * s, -2 * s, doc.iconSize + (4 * s), doc.iconSize + (4 * s)];
+
+    const sprite = new PIXI.Sprite();
+
+    const bg = sprite.addChild(new PIXI.Graphics());
+    bg.beginFill(0x000000, 0.4);
+    bg.lineStyle(2 * s, 0x000000, 1.0);
+    bg.drawRoundedRect(rect[0], rect[1], rect[2], rect[3], 5 * s);
+    bg.endFill();
+
+    const icon = sprite.addChild(new PIXI.Sprite(iconTexture));
+    icon.tint = doc.texture.tint ?? 0xffffff;
+    icon.width = icon.height = doc.iconSize;
+
+    return canvas.app?.renderer.generateTexture(sprite);
+  }
+
+  createNoteSprite(doc: NoteDocument): PIXI.Sprite | undefined {
+    const texture = this.createNoteTexture(doc);
+    if (!texture) return;
+
+    const sprite = new PIXI.Sprite(texture);
+    sprite.anchor.x = doc.texture.anchorX ?? 0.5;
+    sprite.anchor.y = doc.texture.anchorY ?? 0.5;
+
+    return sprite;
   }
 
   private createDrawingTexture(doc: DrawingDocument): PIXI.Texture | undefined {
@@ -269,6 +312,22 @@ export class SceneRenderer {
     }
   }
 
+  private updateNoteText(doc: NoteDocument) {
+    const sprite = this.getSprite(doc);
+    if (!sprite) return;
+
+    const text = sprite.children.find(child => child instanceof PreciseText) ?? sprite.addChild(new PreciseText());
+    text.text = doc.text ?? "";
+    text.anchor.set(0.5, 1);
+    // text.scale.set(5, 5);
+    text.style = CONFIG.canvasTextStyle;
+    text.y = sprite.height;
+    // // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    // const s = (canvas?.dimensions as any)?.uiScale as number ?? 1;
+    // text.position.set(doc.iconSize / 2, -12 * s);
+
+  }
+
   private createDrawingSprite(doc: DrawingDocument): PIXI.Sprite | undefined {
     const texture = this.createDrawingTexture(doc);
     if (texture) {
@@ -277,12 +336,30 @@ export class SceneRenderer {
     }
   }
 
+  private canSeeNote(note: NoteDocument, user?: User): boolean {
+    const actualUser = user ?? game.user;
+    if (!(actualUser instanceof User)) return false;
+
+    // If they're a GM, always show this
+    if (actualUser.isGM) return true;
+
+    return note.global;
+  }
+
   private documentAdded(doc: SceneDocument) {
     try {
       if (!this.shouldProcessDocument(doc)) return;
 
       // Create sprite
-      const sprite = doc instanceof DrawingDocument ? this.createDrawingSprite(doc) : this.createTileTokenSprite(doc);
+
+      let sprite: PIXI.Sprite | undefined = undefined;
+      if (doc instanceof DrawingDocument)
+        sprite = this.createDrawingSprite(doc);
+      else if (doc instanceof TileDocument || doc instanceof TokenDocument)
+        sprite = this.createTileTokenSprite(doc);
+      else if (doc instanceof NoteDocument)
+        sprite = this.createNoteSprite(doc);
+
       if (!sprite) return;
 
       sprite.name = doc.name ?? doc.uuid;
@@ -294,7 +371,7 @@ export class SceneRenderer {
     }
   }
 
-  private documentUpdated<t extends SceneDocument>(doc: t, delta?: Partial<t>): void {
+  private documentUpdated<t extends SceneDocument>(doc: t, delta?: DeepPartial<t>): void {
     try {
       if (!this.shouldProcessDocument(doc)) return;
       const sprite = this.getSprite(doc);
@@ -303,7 +380,7 @@ export class SceneRenderer {
 
 
       if (doc instanceof TileDocument || doc instanceof TokenDocument) {
-        if (typeof (delta as Partial<TileDocument> | Partial<TokenDocument>)?.texture?.src === "string") {
+        if (typeof (delta as DeepPartial<TileDocument> | DeepPartial<TokenDocument>)?.texture?.src === "string") {
           // Texture was changed
           const texture = this.createTileTokenTexture(doc);
           if (texture) {
@@ -313,9 +390,10 @@ export class SceneRenderer {
           }
         }
 
-        const actualDelta = delta as Partial<TileDocument> | Partial<TokenDocument> | undefined;
-        // Perform updates that aren't supported by other document types (drawings)
-        sprite.tint = actualDelta?.texture?.tint ?? (doc.texture.tint ?? "#FFFFFF");
+        const actualDelta = delta as DeepPartial<TileDocument> | DeepPartial<TokenDocument> | undefined;
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        sprite.tint = actualDelta?.texture?.tint as any ?? (doc.texture?.tint ?? "#FFFFFF");
 
         const scaleX = actualDelta?.texture?.scaleX ?? doc.texture?.scaleX ?? 1;
         const scaleY = actualDelta?.texture?.scaleY ?? doc.texture?.scaleY ?? 1;
@@ -341,28 +419,45 @@ export class SceneRenderer {
         sprite.width = doc.shape.width ?? 0;
 
         this.updateDrawingText(doc);
+      } else if (doc instanceof NoteDocument) {
+        if ((delta as DeepPartial<NoteDocument>)?.texture?.src) {
+          const texture = this.createNoteTexture(doc);
+          if (texture) sprite.texture = texture;
+        }
+        this.updateNoteText(doc);
       }
+
       sprite.x = (typeof delta?.x === "number" ? delta.x : doc.x) - this.scene!.dimensions.sceneX;
       sprite.y = (typeof delta?.y === "number" ? delta.y : doc.y) - this.scene!.dimensions.sceneY;
       sprite.zIndex = (typeof delta?.sort === "number" ? delta.sort : doc.sort);
 
       const gridSize = this.scene!.grid.size;   // Our shoudlProcessDocument call earlier ensures scene is not null
 
-      sprite.renderable = !(delta?.hidden ?? doc.hidden);
-
-      if (doc instanceof TokenDocument) {
-        sprite.width = ((typeof (delta as Partial<TokenDocument>)?.width === "number" ? (delta as Partial<TokenDocument>)?.width ?? 0 : doc.width) ?? 1) * gridSize;
-        sprite.height = ((typeof (delta as Partial<TokenDocument>)?.height === "number" ? (delta as Partial<TokenDocument>)?.height ?? 0 : doc.height) ?? 1) * gridSize;
-      } else if (doc instanceof TileDocument) {
-        sprite.width = (delta as Partial<TileDocument>)?.width ?? doc.width;
-        sprite.height = (delta as Partial<TileDocument>)?.height ?? doc.height;
+      if (doc instanceof TileDocument || doc instanceof TokenDocument || doc instanceof DrawingDocument) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        sprite.renderable = !((delta as any)?.hidden ?? doc.hidden);
       }
 
-      sprite.anchor.x = sprite.anchor.y = 0.5;
-      sprite.x += sprite.width * sprite.anchor.x;
-      sprite.y += sprite.height * sprite.anchor.y;
+      if (doc instanceof TokenDocument) {
+        sprite.width = ((typeof (delta as DeepPartial<TokenDocument>)?.width === "number" ? (delta as DeepPartial<TokenDocument>)?.width ?? 0 : doc.width) ?? 1) * gridSize;
+        sprite.height = ((typeof (delta as DeepPartial<TokenDocument>)?.height === "number" ? (delta as DeepPartial<TokenDocument>)?.height ?? 0 : doc.height) ?? 1) * gridSize;
+      } else if (doc instanceof TileDocument) {
+        sprite.width = (delta as DeepPartial<TileDocument>)?.width ?? doc.width;
+        sprite.height = (delta as DeepPartial<TileDocument>)?.height ?? doc.height;
+      } else if (doc instanceof NoteDocument) {
+        sprite.width = sprite.height = (delta as DeepPartial<NoteDocument>)?.iconSize ?? doc.iconSize;
+        sprite.renderable = this.canSeeNote(doc);
+      }
 
-      sprite.angle = delta?.rotation ?? doc.rotation;
+
+      if (doc instanceof TokenDocument || doc instanceof TileDocument || doc instanceof DrawingDocument) {
+        sprite.anchor.x = sprite.anchor.y = 0.5;
+        sprite.x += sprite.width * sprite.anchor.x;
+        sprite.y += sprite.height * sprite.anchor.y;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        sprite.angle = (delta as any)?.rotation ?? doc.rotation;
+
+      }
 
     } catch (err) {
       logError(err as Error);
@@ -398,14 +493,18 @@ export class SceneRenderer {
     Hooks.on("sceneUpdate", (scene: Scene) => { if (this.active && scene === this.scene) this.sceneUpdated(); });
     Hooks.on("createToken", (token: TokenDocument) => { this.documentAdded(token); });
     Hooks.on("deleteToken", (token: TokenDocument) => { this.documentRemoved(token); });
-    Hooks.on("updateToken", (token: TokenDocument, delta: Partial<TokenDocument>) => { this.documentUpdated(token, delta); });
+    Hooks.on("updateToken", (token: TokenDocument, delta: DeepPartial<TokenDocument>) => { this.documentUpdated(token, delta); });
 
     Hooks.on("createTile", (tile: TileDocument) => { this.documentAdded(tile); });
     Hooks.on("deleteTile", (tile: TileDocument) => { this.documentRemoved(tile); });
-    Hooks.on("updateTile", (tile: TileDocument, delta: Partial<TileDocument>) => { this.documentUpdated(tile, delta); });
+    Hooks.on("updateTile", (tile: TileDocument, delta: DeepPartial<TileDocument>) => { this.documentUpdated(tile, delta); });
 
     Hooks.on("createDrawing", (drawing: DrawingDocument) => { this.documentAdded(drawing); });
     Hooks.on("deleteDrawing", (drawing: DrawingDocument) => { this.documentRemoved(drawing); });
-    Hooks.on("updateDrawing", (drawing: DrawingDocument, delta: Partial<DrawingDocument>) => { this.documentUpdated(drawing, delta); });
+    Hooks.on("updateDrawing", (drawing: DrawingDocument, delta: DeepPartial<DrawingDocument>) => { this.documentUpdated(drawing, delta); });
+
+    Hooks.on("createNote", (note: NoteDocument) => { this.documentAdded(note); });
+    Hooks.on("updateNote", (note: NoteDocument, delta: DeepPartial<NoteDocument>) => { this.documentUpdated(note, delta); });
+    Hooks.on("deleteNote", (note: NoteDocument) => { this.documentRemoved(note); });
   }
 }

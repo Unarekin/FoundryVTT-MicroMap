@@ -9,10 +9,6 @@ export class MiniatureMapCanvasGroup extends PIXI.Container {
 
   constructor() {
     super();
-    this.interactiveChildren = false;
-    this.interactive = false;
-    this.eventMode = "none";
-
     this.name = "MiniatureMapCanvasGroup";
 
     if (canvas?.app) {
