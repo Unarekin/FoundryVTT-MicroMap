@@ -1,4 +1,4 @@
-import { logError } from 'logging';
+import { log, logError } from 'logging';
 import { coerceScene } from './coercion';
 import { DeepPartial } from 'types';
 import { getNoteFlags } from 'utils';
@@ -148,6 +148,59 @@ export class SceneRenderer {
         this._weatherHandler.scene = this.scene;
         this._weatherHandler.initializeWeather();
       }
+    } catch (err) {
+      logError(err as Error);
+    }
+  }
+
+  private sortElements() {
+    try {
+      if (!this.scene) return;
+      const elements = [
+        ...this.scene.tokens.contents,
+        ...this.scene.tiles.contents,
+        ...this.scene.drawings.contents,
+        ...this.scene.notes.contents
+      ]
+      log("Elements");
+      console.table(elements.map(element => ({ name: element.name, type: element.documentName, elevation: element.elevation, sort: element.sort })));
+      const sorted = elements.sort((a, b) => {
+        // Notes come above everything
+        if (a instanceof NoteDocument && !(b instanceof NoteDocument)) return -1;
+        else if (!(a instanceof NoteDocument) && b instanceof NoteDocument) return 1;
+
+        // Then Information-type drawings
+        if (a instanceof DrawingDocument && b instanceof DrawingDocument) {
+          const a1 = a as unknown as { interface: boolean };
+          const b1 = b as unknown as { interface: boolean };
+          if (a1.interface && !b1.interface) return -1;
+          if (!a1.interface && b1.interface) return 1;
+
+          if (a1.interface && b1.interface) {
+            if (a.elevation !== b.elevation) return b.elevation - a.elevation;
+            return a.sort - b.sort;
+          }
+        }
+
+        // Sort by elevation
+        if (a.elevation !== b.elevation) return b.elevation - a.elevation;
+
+        // Within the same elevation, tokens go at the top, then tiles, then drawings
+        if (a instanceof TokenDocument && !(b instanceof TokenDocument)) return -1;
+        if (!(a instanceof TokenDocument && b instanceof TokenDocument)) return 1;
+
+        if (a instanceof TileDocument && b instanceof DrawingDocument) return -1;
+        if (a instanceof DrawingDocument && b instanceof TileDocument) return 1;
+
+        // They are the same type of thing at the same elevation.  Sort by their sort property
+        return b.sort - a.sort;
+      }).reverse();
+      log("Sorted:");
+      console.table(elements.map(element => ({ name: element.name, type: element.documentName, elevation: element.elevation, sort: element.sort })));
+      sorted.forEach((item, i) => {
+        const sprite = this.getSprite(item);
+        if (sprite) sprite.zIndex = i;
+      })
     } catch (err) {
       logError(err as Error);
     }
@@ -505,6 +558,8 @@ export class SceneRenderer {
 
       this.darknessSprite.width = this.scene?.width ?? 0;
       this.darknessSprite.height = this.scene?.height ?? 0;
+
+      this.sortElements();
     } catch (err) {
       logError(err as Error);
     }
