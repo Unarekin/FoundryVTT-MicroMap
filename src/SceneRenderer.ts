@@ -13,6 +13,7 @@ export class SceneRenderer {
   private bgColorSprite: PIXI.Sprite;
   private bgImageSprite: PIXI.Sprite;
   private fgImageSprite: PIXI.Sprite;
+  private darknessSprite: PIXI.Sprite;
   public readonly weatherContainer = new PIXI.Container();
 
   public get active() { return this._active; }
@@ -140,6 +141,9 @@ export class SceneRenderer {
       if (typeof delta?.background?.src !== "undefined") this.drawBackgroundImage();
       if (typeof delta?.foreground !== "undefined") this.drawForegroundImage();
 
+      if (typeof delta?.environment?.darknessLevel !== "undefined")
+        this.darknessSprite.alpha = delta.environment.darknessLevel * .8;
+
       if (typeof delta?.weather !== "undefined") {
         this._weatherHandler.scene = this.scene;
         this._weatherHandler.initializeWeather();
@@ -168,7 +172,7 @@ export class SceneRenderer {
       this.scene.drawings.forEach(doc => { this.documentAdded(doc); });
       this.scene.notes.forEach(doc => { this.documentAdded(doc); });
 
-      this.sceneUpdated(this.scene ?? {});
+      this.sceneUpdated(this.scene);
     } catch (err) {
       logError(err as Error);
     }
@@ -499,6 +503,8 @@ export class SceneRenderer {
 
       }
 
+      this.darknessSprite.width = this.scene?.width ?? 0;
+      this.darknessSprite.height = this.scene?.height ?? 0;
     } catch (err) {
       logError(err as Error);
     }
@@ -522,9 +528,19 @@ export class SceneRenderer {
     this.fgImageSprite = new PIXI.Sprite();
     this.bgImageSprite = new PIXI.Sprite();
 
+    this.darknessSprite = new PIXI.Sprite(PIXI.Texture.from(`modules/${__MODULE_ID__}/assets/white.webp`));
+    this.darknessSprite.tint = 0x000000;
+    this.darknessSprite.alpha = 0;
+    this.darknessSprite.x = 0;
+    this.darknessSprite.y = 0;
+    this.darknessSprite.width = this.scene?.width ?? 0;
+    this.darknessSprite.height = this.scene?.height ?? 0;
+    this.darknessSprite.zIndex = 100000
+
     this.bgColorSprite.name = "Scene BG Color";
     this.fgImageSprite.name = "Scene FG Image";
     this.bgImageSprite.name = "Scene BG Image";
+    this.darknessSprite.name = "Scene Darkness Level";
     this.weatherContainer.name = "Scene Weather Effects";
 
     this.container.addChild(this.bgColorSprite);
@@ -533,6 +549,8 @@ export class SceneRenderer {
 
     this.weatherContainer.zIndex = 50000;
     this.container.addChild(this.weatherContainer);
+
+    this.container.addChild(this.darknessSprite);
 
     // Set up some hooks
     Hooks.on("updateScene", (scene: Scene, delta: DeepPartial<Scene>) => { if (this.active && scene === this.scene) this.sceneUpdated(delta); });
