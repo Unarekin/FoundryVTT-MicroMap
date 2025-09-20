@@ -16,6 +16,16 @@ export class MiniMap {
   public static readonly MinZoom = .01;
   public static readonly MaxZoom = 5;
 
+  private _antiAliasing = true;
+  public get antiAliasing() { return this._antiAliasing; }
+  public set antiAliasing(val) {
+    if (this.antiAliasing !== val) {
+      this._antiAliasing = val;
+    }
+
+    this.sceneRenderer.antiAliasing = val;
+  }
+
   #bgSprite: PIXI.Sprite;
   #mapContainer = new PIXI.Container();
 

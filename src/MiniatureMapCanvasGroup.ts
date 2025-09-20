@@ -21,5 +21,8 @@ export class MiniatureMapCanvasGroup extends PIXI.Container {
     this.addChild(this.miniMap.container);
     this.interactiveChildren = true;
     this.interactive = true;
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    (ui as any).microMap = this.miniMap;
   }
 }

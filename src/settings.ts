@@ -24,6 +24,7 @@ declare global {
     "micro-map.view": MapView;
     "micro-map.padX": number;
     "micro-map.padY": number;
+    "micro-map.disableAntiAliasing": boolean;
   }
 }
 
@@ -59,6 +60,20 @@ Hooks.once("init", () => {
           const map = getMiniMap();
           if (!(map instanceof MiniMap)) return;
           map.visible = value && game.settings.get(__MODULE_ID__, "enable");
+        }
+      });
+
+      game.settings.register(__MODULE_ID__, "disableAntiAliasing", {
+        name: "MINIMAP.SETTINGS.ANTIALIASING.NAME",
+        hint: "MINIMAP.SETTINGS.ANTIALIASING.HINT",
+        config: true,
+        scope: "world",
+        type: Boolean,
+        default: false,
+        requiresReload: false,
+        onChange(value: boolean) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          ((ui as any).microMap as MiniMap).antiAliasing = !value;
         }
       })
 

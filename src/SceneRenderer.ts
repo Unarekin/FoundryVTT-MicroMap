@@ -1,4 +1,4 @@
-import { log, logError } from 'logging';
+import { logError } from 'logging';
 import { coerceScene } from './coercion';
 import { DeepPartial } from 'types';
 import { getNoteFlags } from 'utils';
@@ -15,6 +15,18 @@ export class SceneRenderer {
   private fgImageSprite: PIXI.Sprite;
   private darknessSprite: PIXI.Sprite;
   public readonly weatherContainer = new PIXI.Container();
+
+  private _antiAliasing = true;
+  public get antiAliasing() { return this._antiAliasing; }
+  public set antiAliasing(val) {
+    if (this.antiAliasing !== val) {
+      this._antiAliasing = val;
+      const sprites = Object.values(this.sprites);
+      sprites.forEach(sprite => {
+        sprite.texture.baseTexture.setStyle(val ? 1 : 0, val ? 2 : 0);
+      })
+    }
+  }
 
   public get active() { return this._active; }
   public set active(val) {
@@ -240,6 +252,7 @@ export class SceneRenderer {
     if (texture.baseTexture.resource instanceof PIXI.VideoResource)
       game.video?.play(texture.baseTexture.resource.source, { loop: true });
 
+    if (!this.antiAliasing) texture.baseTexture.setStyle(0, 0);
     return texture;
   }
 
@@ -283,7 +296,9 @@ export class SceneRenderer {
     icon.width = icon.height = doc.iconSize;
     icon.name = "icon"
 
-    return canvas.app?.renderer.generateTexture(sprite);
+    const texture = canvas.app?.renderer.generateTexture(sprite);
+    if (!this.antiAliasing && texture) texture.baseTexture.setStyle(0, 0);
+    return texture;
   }
 
   private createNoteSprite(doc: NoteDocument): PIXI.Sprite | undefined {
@@ -367,7 +382,10 @@ export class SceneRenderer {
     }
 
     graphics.endFill();
-    return canvas?.app?.renderer.generateTexture(graphics);
+
+    const texture = canvas?.app?.renderer.generateTexture(graphics);
+    if (texture && !this.antiAliasing) texture.baseTexture.setStyle(0, 0);
+    return texture;
   }
 
   private updateDrawingText(doc: DrawingDocument) {

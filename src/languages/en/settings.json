@@ -8,6 +8,10 @@
       "MODE": {
         "NAME": "MiniMap Image Mode"
       },
+      "ANTIALIASING": {
+        "NAME": "Disable AntiAliasing",
+        "HINT": "When this option is enabled, items drawn on the minimap won't be antialias when they're scaled, causing them to appear sharper."
+      },
       "LOCKGMVIEW": {
         "NAME": "Lock To GM View",
         "HINT": "If enabled, will force players' view to match the GM's."
