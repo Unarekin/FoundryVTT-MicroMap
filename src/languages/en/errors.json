@@ -3,7 +3,8 @@
     "ERRORS": {
       "FILENOTFOUND": "File not found: {file}",
       "CONTEXTMENUELEMENTNOTFOUND": "Container element for context menu not found",
-      "NOTINITIALIZED": "Renderer not initialized"
+      "NOTINITIALIZED": "Renderer not initialized",
+      "SOCKETNOTINITIALIZED": "Websocket not initialized"
     }
   }
 }

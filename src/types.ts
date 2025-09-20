@@ -74,3 +74,19 @@ export interface SceneFlags {
   mask: string;
   overlaySettings: OverlaySettings;
 }
+
+export const MESSAGE_TYPES = ["sync"] as const;
+export type SocketMessageType = typeof MESSAGE_TYPES[number];
+
+export interface SocketMessage {
+  id: string;
+  type: SocketMessageType;
+  timestamp: number;
+  sender: string;
+  users: string[];
+}
+
+export interface SyncSocketMessage extends SocketMessage {
+  type: "sync";
+  view: MapView;
+}

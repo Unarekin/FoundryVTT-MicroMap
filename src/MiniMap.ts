@@ -608,7 +608,7 @@ export class MiniMap {
   private async updateViewIfLocked() {
     const game = await getGame();
     if (!this.lockGMView || !game.user.isGM) return;
-    await synchronizeView();
+    synchronizeView();
   }
 
   public get baseWidth() {
