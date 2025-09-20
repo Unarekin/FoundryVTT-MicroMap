@@ -2,15 +2,18 @@ import { logError } from 'logging';
 import { coerceScene } from './coercion';
 import { DeepPartial } from 'types';
 import { getNoteFlags } from 'utils';
+import { WeatherHandler } from "./WeatherHandler";
 
 type SceneDocument = TileDocument | TokenDocument | DrawingDocument | NoteDocument;
 
 export class SceneRenderer {
   private _active = false;
+  private _weatherHandler;
 
   private bgColorSprite: PIXI.Sprite;
   private bgImageSprite: PIXI.Sprite;
   private fgImageSprite: PIXI.Sprite;
+  public readonly weatherContainer = new PIXI.Container();
 
   public get active() { return this._active; }
   public set active(val) {
@@ -77,22 +80,37 @@ export class SceneRenderer {
     this.bgColorSprite.zIndex = -20000;
   }
 
-  private drawBackgroundImage() {
+  private setBgTexture(texture: PIXI.Texture) {
     if (!this.scene) return;
+    const oldTexture = this.bgImageSprite.texture;
+    this.bgImageSprite.texture = texture;
+    oldTexture.destroy();
 
-    if (this.scene.background.src) {
-      const oldTexture = this.bgImageSprite.texture;
-      const texture = PIXI.Texture.from(this.scene.background.src);
+    this.bgImageSprite.width = this.scene.width!;
+    this.bgImageSprite.height = this.scene.height!;
 
-      this.bgImageSprite.texture = texture;
-      oldTexture.destroy();
-      this.bgImageSprite.width = this.scene.width!;
-      this.bgImageSprite.height = this.scene.height!;
+    this.bgImageSprite.visible = true;
+    this.bgImageSprite.zIndex = -10000;
+  }
 
-      this.bgImageSprite.visible = true;
-      this.bgImageSprite.zIndex = -10000;
-    } else {
-      this.bgImageSprite.visible = false;
+  private drawBackgroundImage() {
+    try {
+      if (!this.scene) return;
+
+      if (this.scene.background.src) {
+        const texture = PIXI.Texture.from(this.scene.background.src);
+        if (!texture.baseTexture.valid) {
+          texture.baseTexture.once("loaded", () => {
+            this.setBgTexture(texture);
+          });
+        } else {
+          this.setBgTexture(texture);
+        }
+      } else {
+        this.bgImageSprite.visible = false;
+      }
+    } catch (err) {
+      logError(err as Error);
     }
   }
 
@@ -115,12 +133,17 @@ export class SceneRenderer {
     }
   }
 
-  private sceneUpdated() {
+  private sceneUpdated(delta?: DeepPartial<Scene>) {
     try {
       if (!this.scene || !this.active) return;
-      this.drawBackgroundColor();
-      this.drawBackgroundImage();
-      this.drawForegroundImage();
+      if (typeof delta?.backgroundColor !== "undefined") this.drawBackgroundColor();
+      if (typeof delta?.background?.src !== "undefined") this.drawBackgroundImage();
+      if (typeof delta?.foreground !== "undefined") this.drawForegroundImage();
+
+      if (typeof delta?.weather !== "undefined") {
+        this._weatherHandler.scene = this.scene;
+        this._weatherHandler.initializeWeather();
+      }
     } catch (err) {
       logError(err as Error);
     }
@@ -145,7 +168,7 @@ export class SceneRenderer {
       this.scene.drawings.forEach(doc => { this.documentAdded(doc); });
       this.scene.notes.forEach(doc => { this.documentAdded(doc); });
 
-      this.sceneUpdated();
+      this.sceneUpdated(this.scene ?? {});
     } catch (err) {
       logError(err as Error);
     }
@@ -169,7 +192,7 @@ export class SceneRenderer {
     return new PIXI.Sprite(texture);
   }
 
-  createNoteTexture(doc: NoteDocument): PIXI.Texture | undefined {
+  private createNoteTexture(doc: NoteDocument): PIXI.Texture | undefined {
     if (!this.shouldProcessDocument(doc)) return;
     if (!(doc.texture.src)) return;
 
@@ -206,7 +229,7 @@ export class SceneRenderer {
     return canvas.app?.renderer.generateTexture(sprite);
   }
 
-  createNoteSprite(doc: NoteDocument): PIXI.Sprite | undefined {
+  private createNoteSprite(doc: NoteDocument): PIXI.Sprite | undefined {
     const texture = this.createNoteTexture(doc);
     if (!texture) return;
 
@@ -492,6 +515,7 @@ export class SceneRenderer {
   }
 
   constructor(protected readonly container: PIXI.Container) {
+    this._weatherHandler = new WeatherHandler(this);
     this.container.sortableChildren = true;
 
     this.bgColorSprite = new PIXI.Sprite();
@@ -501,13 +525,17 @@ export class SceneRenderer {
     this.bgColorSprite.name = "Scene BG Color";
     this.fgImageSprite.name = "Scene FG Image";
     this.bgImageSprite.name = "Scene BG Image";
+    this.weatherContainer.name = "Scene Weather Effects";
 
     this.container.addChild(this.bgColorSprite);
     this.container.addChild(this.bgImageSprite);
     this.container.addChild(this.fgImageSprite);
 
+    this.weatherContainer.zIndex = 50000;
+    this.container.addChild(this.weatherContainer);
+
     // Set up some hooks
-    Hooks.on("sceneUpdate", (scene: Scene) => { if (this.active && scene === this.scene) this.sceneUpdated(); });
+    Hooks.on("updateScene", (scene: Scene, delta: DeepPartial<Scene>) => { if (this.active && scene === this.scene) this.sceneUpdated(delta); });
     Hooks.on("createToken", (token: TokenDocument) => { this.documentAdded(token); });
     Hooks.on("deleteToken", (token: TokenDocument) => { this.documentRemoved(token); });
     Hooks.on("updateToken", (token: TokenDocument, delta: DeepPartial<TokenDocument>) => { this.documentUpdated(token, delta); });
