@@ -277,7 +277,7 @@ export class MiniMap {
   /**
    * Updates the visuals of our minimap in accordance with its settings.
    */
-  protected update() {
+  public update() {
     if (this._suppressUpdate) return;
     this.staticSprite.visible = this.mode === "image" && !!this.image;
     this.sceneSprite.visible = this.mode === "scene" && !!this.scene;

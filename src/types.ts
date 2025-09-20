@@ -56,3 +56,21 @@ export const DefaultNoteFlags: NoteFlags = {
   showBG: true,
   showLabel: false
 }
+
+
+export interface SceneFlags {
+  override: boolean;
+  show: boolean;
+  width: number;
+  height: number;
+  mode: MapMode;
+  image?: string;
+  scene?: string;
+  position: MapPosition;
+  bgColor: string;
+  padX: number;
+  padY: number;
+  shape: MapShape;
+  mask: string;
+  overlaySettings: OverlaySettings;
+}

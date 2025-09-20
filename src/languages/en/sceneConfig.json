@@ -1,0 +1,10 @@
+{
+  "MINIMAP": {
+    "SCENECONFIG": {
+      "OVERRIDE": {
+        "NAME": "Override Global Settings",
+        "HINT": "If enabled, MicroMap will use these settings instead of the global settings."
+      }
+    }
+  }
+}

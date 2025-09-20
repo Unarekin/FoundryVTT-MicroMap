@@ -1,0 +1,88 @@
+<div class="tab{{#if tab.active}} active{{/if}}" data-group="{{#if microMap.isV1}}main{{else}}sheet{{/if}}" data-tab="micromap" data-application-part="micromap">
+  {{#with microMap}}
+    <div class="form-group">
+      <label for="{{idPrefix}}-override">{{localize "MINIMAP.SCENECONFIG.OVERRIDE.NAME"}}</label>
+      <input type="checkbox" name="microMap.override" id="{{idPrefix}}-override" {{checked flags.override}}>
+      <p class="hint">{{localize "MINIMAP.SCENECONFIG.OVERRIDE.HINT"}}</p>
+    </div>
+
+    <div class="form-group">
+      <label for="{{idPrefix}}-show">{{localize "MINIMAP.SETTINGS.ENABLE.NAME"}}</label>
+      <input type="checkbox" name="microMap.show" id="{{idPrefix}}-show" {{checked flags.show}}>
+      <p class="hint">{{localize "MINIMAP.SETTINGS.ENABLE.HINT"}}</p>
+    </div>
+
+    <div class="form-group">
+      <label>{{localize "MINIMAP.SETTINGS.OVERLAY.NAME"}}</label>
+      <button type="button" data-action="overlaySettings">{{localize "MINIMAP.SETTINGS.OVERLAY.BUTTON"}}</button>
+      <p class="hint">{{localize "MINIMAP.SETTINGS.OVERLAY.HINT"}}</p>
+    </div>
+
+    <div class="form-group">
+      <label for="{{idPrefix}}-mode">{{localize "MINIMAP.SETTINGS.MODE.NAME"}}</label>
+      <select name="microMap.mode" id="{{idPrefix}}-mode" data-role="mode-select">
+        {{selectOptions modeSelect localize=true selected=flags.mode}}
+      </select>
+    </div>
+
+    <div class="form-group" data-mode="scene" style="display:none">
+      <label for="{{idPrefix}}-scene">{{localize "DOCUMENT.Scene"}}</label>
+      <select name="microMap.scene" id="{{idPrefix}}-scene">
+        <option></option>
+        {{selectOptions sceneSelect selected=flags.scene }}
+      </select>
+    </div>
+
+    <div class="form-group" data-mode="image" style="display:none">
+      <label for="{{idPrefix}}-image">{{localize "Image"}}</label>
+      <file-picker
+        id="{{idPrefix}}-image"
+        name="microMap.image"
+        type="imagevideo"
+        value="{{flags.image}}"
+      ></file-picker>
+    </div>
+
+    <div class="form-group slim">
+      <label>{{localize "TOKEN.Dimensions"}}</label>
+      <div class="form-fields">
+        <label for="{{idPrefix}}-width">{{localize "Width"}}</label>
+        <input type="number" name="microMap.width" id="{{idPrefix}}-width" value="{{flags.width}}" min="0" step="1">
+        <label for="{{idPrefix}}-height">{{localize "Height"}}</label>
+        <input type="number" name="microMap.height" id="{{idPrefix}}-height" value="{{flags.height}}" min="0" step="1">
+      </div>
+      <p class="hint"></p>
+    </div>
+
+    <div class="form-group slim">
+      <label>{{localize "MINIMAP.SETTINGS.PADDING.NAME"}}</label>
+      <div class="form-fields">
+        <label for="{{idPrefix}}-padX">{{localize "MINIMAP.SETTINGS.PADDING.X"}}</label>
+        <input type="number" min="0" step="1" name="microMap.padX" id="{{idPrefix}}-padX" value="{{flags.padX}}">
+        <label for="{{idPrefix}}-padY">{{localize "MINIMAP.SETTINGS.PADDING.Y"}}</label>
+        <input type="number" min="0" step="1" name="microMap.padY" id="{{idPrefix}}-padY" value="{{flags.padY}}">
+      </div>
+      <p class="hint"></p>
+    </div>
+
+    <div class="form-group">
+      <label for="{{idPrefix}}-bgColor">{{localize "MINIMAP.SETTINGS.BGCOLOR.NAME"}}</label>
+      <color-picker name="microMap.bgColor" id="{{idPrefix}}-bgColor" value="{{flags.bgColor}}"></color-picker>
+      <p class="hint">{{localize "MINIMAP.SETTINGS.BGCOLOR.HINT"}}</p>
+    </div>
+
+    <div class="form-group">
+      <label for="{{idPrefix}}-shape">{{localize "MINIMAP.SETTINGS.SHAPE.NAME"}}</label>
+      <select name="microMap.shape" id="{{idPrefix}}-shape" data-role="shape-select">
+        {{selectOptions shapeSelect localize=true selected=flags.shape}}
+      </select>
+      <p class="hint">{{localize "MINIMAP.SETTINGS.SHAPE.HINT"}}</p>
+    </div>
+
+    <div class="form-group" data-shape="mask" style="display:none">
+      <label for="{{idPrefix}}-mask">{{localize "MINIMAP.SETTINGS.MASK.NAME"}}</label>
+      <file-picker name="microMap.mask" id="{{idPrefix}}-mask" type="image" value="{{flags.mask}}"></file-picker>
+      <p class="hint">{{localize "MINIMAP.SETTINGS.MASK.HINT"}}</p>
+    </div>
+  {{/with}}
+</div>
