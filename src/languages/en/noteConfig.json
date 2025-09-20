@@ -1,0 +1,9 @@
+{
+  "MINIMAP": {
+    "NOTECONFIG": {
+      "SHOW": "Show On MicroMap",
+      "SHOWBG": "Show Background",
+      "SHOWLABEL": "Show Label"
+    }
+  }
+}

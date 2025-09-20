@@ -1,6 +1,7 @@
 import { LocalizedError } from "errors";
 import { MiniatureMapCanvasGroup } from "MiniatureMapCanvasGroup";
 import { MiniMap } from "MiniMap";
+import { DefaultNoteFlags, NoteFlags } from "types";
 
 let gameReadyPromise: Promise<void> | undefined = undefined;
 
@@ -65,4 +66,14 @@ export async function nineSliceScale(source: PIXI.TextureSource, width: number, 
   ctx.drawImage(sourceCanvas, sprite.width - right, sprite.height - bottom, right, bottom, width - right, height - bottom, right, bottom);
 
   return output;
+}
+
+export function getNoteFlags(note: NoteDocument): NoteFlags {
+  const flags = foundry.utils.deepClone(DefaultNoteFlags);
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  const setFlags = (note.flags as any)["micro-map"] as Partial<NoteFlags>;
+  if (typeof setFlags?.show === "boolean") flags.show = setFlags.show;
+  if (typeof setFlags?.showBG === "boolean") flags.showBG = setFlags.showBG;
+  if (typeof setFlags?.showLabel === "boolean") flags.showLabel = setFlags.showLabel;
+  return flags;
 }

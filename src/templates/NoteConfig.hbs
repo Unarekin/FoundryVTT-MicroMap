@@ -1,0 +1,38 @@
+<fieldset>
+  <legend>{{localize "MINIMAP.TITLE"}}</legend>
+  <div class="form-group">
+    <label for="{{idPrefix}}-show">{{localize
+        "MINIMAP.NOTECONFIG.SHOW"
+      }}</label>
+    <input
+      type="checkbox"
+      id="{{idPrefix}}-show"
+      name="microMap.show"
+      {{checked flags.show}}
+    />
+  </div>
+
+  <div class="form-group">
+    <label for="{{idPrefix}}-showBG">{{localize
+        "MINIMAP.NOTECONFIG.SHOWBG"
+      }}</label>
+    <input
+      type="checkbox"
+      name="microMap.showBG"
+      id="{{idPrefix}}-showBG"
+      {{checked flags.showBG}}
+    />
+  </div>
+
+  <div class="form-group">
+    <label for="{{idPrefix}}-showLabel">{{localize
+        "MINIMAP.NOTECONFIG.SHOWLABEL"
+      }}</label>
+    <input
+      type="checkbox"
+      name="microMap.showLabel"
+      id="{{idPrefix}}-showLabel"
+      {{checked flags.showLabel}}
+    />
+  </div>
+</fieldset>

@@ -630,6 +630,7 @@ export class MiniMap {
     this.container.name = "MiniMap Container";
     this.container.sortableChildren = true;
     this.container.interactive = true;
+    this.container.interactiveChildren = true;
     this.container.eventMode = "dynamic";
 
     if (this.image)
