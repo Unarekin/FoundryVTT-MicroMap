@@ -90,3 +90,16 @@ export interface SyncSocketMessage extends SocketMessage {
   type: "sync";
   view: MapView;
 }
+
+export interface MapMarkerConfig {
+  id: string;
+  label: string;
+  icon: string;
+  tint: string;
+  showLabel: boolean;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  dropShadow: boolean;
+}

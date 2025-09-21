@@ -1,7 +1,7 @@
 import { getGame, getMiniMap, localize } from "./utils";
 import { log, logError } from "./logging";
 import { MiniMap } from "MiniMap";
-import { MapPosition, MapShape, OverlaySettings, MapMode, MapView } from './types';
+import { MapPosition, MapShape, OverlaySettings, MapMode, MapView, MapMarkerConfig } from './types';
 import { OverlaySettingsApplication } from "./applications";
 import { synchronizeView } from "sockets";
 
@@ -25,6 +25,7 @@ declare global {
     "micro-map.padX": number;
     "micro-map.padY": number;
     "micro-map.disableAntiAliasing": boolean;
+    "micro-map.markers": MapMarkerConfig[]
   }
 }
 
@@ -348,6 +349,20 @@ Hooks.once("init", () => {
         type: Object,
         default: { x: 0, y: 0, zoom: 1 }
       });
+
+      game.settings.register(__MODULE_ID__, "markers", {
+        scope: "world",
+        config: false,
+        type: Array,
+        default: [],
+        onChange(markers: MapMarkerConfig[]) {
+          const map = getMiniMap();
+          if (!(map instanceof MiniMap)) return;
+          for (const marker of markers)
+            map.addMapMarker(marker);
+
+        }
+      })
 
 
       log("Settings registered");

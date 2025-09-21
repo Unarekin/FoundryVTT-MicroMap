@@ -6,7 +6,13 @@
       "LOCKGM": "Lock to GM View",
       "SETTINGS": "MiniMap Settings",
       "SYNCHRONIZE": "Synchronize Other Players",
-      "UNLOCKGM": "Unlock from GM View"
+      "UNLOCKGM": "Unlock from GM View",
+      "MARKERS": {
+        "ADD": "Add Map Marker",
+        "EDIT": "Edit Map Marker",
+        "REMOVE": "Remove Map Marker",
+        "CLEAR": "Clear Map Markers"
+      }
     }
   }
 }

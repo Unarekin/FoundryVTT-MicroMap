@@ -19,3 +19,11 @@ export function sceneConfigSelectOptions(): Record<string, Record<string, string
     sceneSelect: Object.fromEntries((game?.scenes ?? []).map(scene => [scene.id, scene.name]))
   }
 }
+
+export async function confirm(title: string, content: string): Promise<boolean> {
+  return foundry.applications.api.DialogV2.confirm({
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    window: ({ title } as any),
+    content
+  }) as Promise<boolean>;
+}
