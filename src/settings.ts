@@ -1,18 +1,46 @@
 import { getGame, getMiniMap, localize } from "./utils";
 import { log, logError } from "./logging";
 import { MiniMap } from "MiniMap";
-import { MapPosition, MapShape, OverlaySettings, MapMode } from './types';
-import { OverlaySettingsApplication } from "./applications";
+import { MapPosition, MapShape, OverlaySettings, MapMode, MapView, MapMarkerConfig } from './types';
+import { MapMarkerSettingsApplication, OverlaySettingsApplication } from "./applications";
 import { synchronizeView } from "sockets";
+
+declare global {
+  interface SettingConfig {
+    "micro-map.enable": boolean;
+    "micro-map.show": boolean;
+    "micro-map.unlockPlayers": boolean;
+    "micro-map.lockGMView": boolean;
+    "micro-map.mode": MapMode;
+    "micro-map.image": string;
+    "micro-map.scene": string;
+    "micro-map.position": MapPosition;
+    "micro-map.bgColor": string;
+    "micro-map.width": number;
+    "micro-map.height": number;
+    "micro-map.shape": MapShape;
+    "micro-map.mask": string;
+    "micro-map.overlaySettings": OverlaySettings;
+    "micro-map.view": MapView;
+    "micro-map.padX": number;
+    "micro-map.padY": number;
+    "micro-map.disableAntiAliasing": boolean;
+    "micro-map.markers": MapMarkerConfig[];
+    "micro-map.showWeather": boolean;
+    "micro-map.showDarkness": boolean;
+    "micro-map.showDrawings": boolean;
+    "micro-map.showNotes": boolean;
+  }
+}
 
 Hooks.once("init", () => {
 
   getGame()
     .then(game => {
       // Register settings
-      game.settings.register(__MODULE_ID__, "show", {
-        name: "MINIMAP.SETTINGS.SHOW.NAME",
-        hint: "MINIMAP.SETTINGS.SHOW.HINT",
+      game.settings.register(__MODULE_ID__, "enable", {
+        name: "MINIMAP.SETTINGS.ENABLE.NAME",
+        hint: "MINIMAP.SETTINGS.ENABLE.HINT",
         config: true,
         scope: "world",
         type: Boolean,
@@ -21,9 +49,38 @@ Hooks.once("init", () => {
         onChange(value: boolean) {
           const map = getMiniMap();
           if (!(map instanceof MiniMap)) return;
-          map.visible = value;
+          map.visible = value && game.settings.get(__MODULE_ID__, "show");
         }
       });
+
+      game.settings.register(__MODULE_ID__, "show", {
+        name: "MINIMAP.SETTINGS.SHOW.NAME",
+        hint: "MINIMAP.SETTINGS.SHOW.HINT",
+        config: true,
+        scope: "client",
+        type: Boolean,
+        default: true,
+        requiresReload: false,
+        onChange(value: boolean) {
+          const map = getMiniMap();
+          if (!(map instanceof MiniMap)) return;
+          map.visible = value && game.settings.get(__MODULE_ID__, "enable");
+        }
+      });
+
+      game.settings.register(__MODULE_ID__, "disableAntiAliasing", {
+        name: "MINIMAP.SETTINGS.ANTIALIASING.NAME",
+        hint: "MINIMAP.SETTINGS.ANTIALIASING.HINT",
+        config: true,
+        scope: "world",
+        type: Boolean,
+        default: false,
+        requiresReload: false,
+        onChange(value: boolean) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          ((ui as any).microMap as MiniMap).antiAliasing = !value;
+        }
+      })
 
       game.settings.register(__MODULE_ID__, "unlockPlayers", {
         name: "MINIMAP.SETTINGS.UNLOCKPLAYERS.NAME",
@@ -85,9 +142,9 @@ Hooks.once("init", () => {
         config: true,
         scope: "world",
         type: String,
+        filePicker: "image",
         default: "",
         requiresReload: false,
-        filePicker: "image",
         required: false,
         onChange(value: string) {
           const map = getMiniMap();
@@ -105,7 +162,7 @@ Hooks.once("init", () => {
           idOnly: true,
           blank: true
         }),
-        default: null,
+        default: undefined,
         requiresReload: false,
         onChange(id: string) {
           const map = getMiniMap();
@@ -113,6 +170,66 @@ Hooks.once("init", () => {
           map.scene = id;
         }
       });
+
+      game.settings.register(__MODULE_ID__, "showWeather", {
+        name: "MINIMAP.SETTINGS.SHOWWEATHER.NAME",
+        hint: "MINIMAP.SETTINGS.SHOWWEATHER.HINT",
+        config: true,
+        scope: "world",
+        type: Boolean,
+        default: true,
+        requiresReload: false,
+        onChange(val: boolean) {
+          const map = getMiniMap();
+          if (!(map instanceof MiniMap)) return;
+          map.showWeather = val;
+        }
+      });
+
+      game.settings.register(__MODULE_ID__, "showDarkness", {
+        name: "MINIMAP.SETTINGS.SHOWDARKNESS.NAME",
+        hint: "MINIMAP.SETTINGS.SHOWDARKNESS.HINT",
+        config: true,
+        scope: "world",
+        type: Boolean,
+        default: true,
+        requiresReload: false,
+        onChange(val: boolean) {
+          const map = getMiniMap();
+          if (!(map instanceof MiniMap)) return;
+          map.showDarkness = val;
+        }
+      });
+
+      game.settings.register(__MODULE_ID__, "showDrawings", {
+        name: "MINIMAP.SETTINGS.SHOWDRAWINGS.NAME",
+        hint: "MINIMAP.SETTINGS.SHOWDRAWINGS.HINT",
+        config: true,
+        scope: "world",
+        type: Boolean,
+        default: true,
+        requiresReload: false,
+        onChange(val: boolean) {
+          const map = getMiniMap();
+          if (!(map instanceof MiniMap)) return;
+          map.showDrawings = val;
+        }
+      });
+
+      game.settings.register(__MODULE_ID__, "showNotes", {
+        name: "MINIMAP.SETTINGS.SHOWNOTES.NAME",
+        hint: "MINIMAP.SETTINGS.SHOWNOTES.HINT",
+        config: true,
+        scope: "world",
+        type: Boolean,
+        default: true,
+        requiresReload: false,
+        onChange(val: boolean) {
+          const map = getMiniMap();
+          if (!(map instanceof MiniMap)) return;
+          map.showNotes = val;
+        }
+      })
 
       game.settings.register(__MODULE_ID__, "position", {
         name: "MINIMAP.SETTINGS.POSITION.NAME",
@@ -149,21 +266,49 @@ Hooks.once("init", () => {
         }
       })
 
-      game.settings.register(__MODULE_ID__, "padding", {
-        name: "MINIMAP.SETTINGS.PADDING.NAME",
-        hint: "MINIMAP.SETTINGS.PADDING.HINT",
-        config: true,
+      game.settings.register(__MODULE_ID__, "padX", {
+        name: "",
+        config: false,
         scope: "world",
         type: Number,
         default: 0,
         requiresReload: false,
-        required: true,
-        onChange(value: number) {
+        onChange(value) {
           const map = getMiniMap();
           if (!(map instanceof MiniMap)) return;
-          map.padding = value;
+          map.padding.x = value;
         }
       });
+
+      game.settings.register(__MODULE_ID__, "padY", {
+        name: "",
+        config: false,
+        scope: "world",
+        type: Number,
+        default: 0,
+        requiresReload: false,
+        onChange(value) {
+          const map = getMiniMap();
+          if (!(map instanceof MiniMap)) return;
+          map.padding.y = value;
+        }
+      })
+
+      // game.settings.register(__MODULE_ID__, "padding", {
+      //   name: "MINIMAP.SETTINGS.PADDING.NAME",
+      //   // hint: "MINIMAP.SETTINGS.PADDING.HINT",
+      //   config: true,
+      //   scope: "world",
+      //   type: Object,
+      //   default: { x: 0, y: 0 },
+      //   requiresReload: false,
+      //   required: true,
+      //   onChange(value) {
+      //     const map = getMiniMap();
+      //     if (!(map instanceof MiniMap)) return;
+      //     map.padding = value;
+      //   },
+      // });
 
       game.settings.register(__MODULE_ID__, "width", {
         name: "Width",
@@ -171,7 +316,6 @@ Hooks.once("init", () => {
         scope: "world",
         type: Number,
         default: 256,
-        min: 0,
         step: 1,
         required: true,
         onChange(width: number) {
@@ -187,7 +331,6 @@ Hooks.once("init", () => {
         scope: "world",
         type: Number,
         default: 256,
-        min: 0,
         step: 1,
         required: true,
         onChange(height: number) {
@@ -248,7 +391,7 @@ Hooks.once("init", () => {
         config: false,
         type: Object,
         default: {
-          show: true,
+          visible: true,
           file: "",
           left: 0,
           right: 0,
@@ -270,6 +413,28 @@ Hooks.once("init", () => {
         type: Object,
         default: { x: 0, y: 0, zoom: 1 }
       });
+
+      game.settings.registerMenu(__MODULE_ID__, "markersMenu", {
+        name: "MINIMAP.SETTINGS.MARKERS.NAME",
+        hint: "MINIMAP.SETTINGS.MARKERS.HINT",
+        label: "MINIMAP.SETTINGS.MARKERS.BUTTON",
+        restricted: true,
+        icon: "fa-solid fa-location-dot",
+        type: MapMarkerSettingsApplication
+      });
+
+      game.settings.register(__MODULE_ID__, "markers", {
+        scope: "world",
+        config: false,
+        type: Array,
+        default: [],
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        onChange(markers: MapMarkerConfig[]) {
+          const map = getMiniMap();
+          if (!(map instanceof MiniMap)) return;
+          map.refreshMapMarkers();
+        }
+      })
 
 
       log("Settings registered");
@@ -314,18 +479,20 @@ Hooks.on("renderSettingsConfig", async (config: foundry.applications.settings.Se
   const height = element.querySelector(`.form-group:has([name="${__MODULE_ID__}.height"])`);
   if (height instanceof HTMLElement) height.remove();
 
+  const padding = element.querySelector(`.form-group:has([name="${__MODULE_ID__}.padding"])`);
+  if (padding instanceof HTMLElement) padding.remove();
+
   // We will inject a new form group after the position element
   const pos = element.querySelector(`.form-group:has([name="${__MODULE_ID__}.position"])`);
   if (pos instanceof HTMLElement) {
     const dimensions = document.createElement("div");
-    dimensions.classList.add("form-group");
-    dimensions.classList.add("slim");
+    dimensions.classList.add("form-group", "slim");
 
     const widthField = new foundry.data.fields.NumberField(game.settings.settings.get(`${__MODULE_ID__}.width`));
     const heightField = new foundry.data.fields.NumberField(game.settings.settings.get(`${__MODULE_ID__}.height`));
 
-    const widthElem = widthField.toFormGroup({ label: "Width", localize: true }, { value: game.settings.get(__MODULE_ID__, "width") as number, name: `${__MODULE_ID__}.width`, id: `settings-config-${__MODULE_ID__}.width` });
-    const heightElem = heightField.toFormGroup({ label: "Height", localize: true }, { value: game.settings.get(__MODULE_ID__, "height") as number, name: `${__MODULE_ID__}.height`, id: `settings-config-${__MODULE_ID__}.height` });
+    const widthElem = widthField.toFormGroup({ label: "Width", localize: true }, { value: game.settings.get(__MODULE_ID__, "width"), name: `${__MODULE_ID__}.width`, id: `settings-config-${__MODULE_ID__}.width` });
+    const heightElem = heightField.toFormGroup({ label: "Height", localize: true }, { value: game.settings.get(__MODULE_ID__, "height"), name: `${__MODULE_ID__}.height`, id: `settings-config-${__MODULE_ID__}.height` });
 
     dimensions.innerHTML = `<label>${localize("TOKEN.Dimensions")}</label>
   <div class="form-fields">
@@ -334,6 +501,25 @@ Hooks.on("renderSettingsConfig", async (config: foundry.applications.settings.Se
   </div>`;
 
     pos.after(dimensions);
+
+    const padding = document.createElement("div");
+    padding.classList.add("form-group", "slim");
+
+
+    const padXField = new foundry.data.fields.NumberField(game.settings.settings.get(`${__MODULE_ID__}.padX`))
+    const padYField = new foundry.data.fields.NumberField(game.settings.settings.get(`${__MODULE_ID__}.padY`));
+
+    const padXElem = padXField.toFormGroup({ label: "MINIMAP.SETTINGS.PADDING.X", localize: true }, { value: game.settings.get(__MODULE_ID__, "padX"), name: `${__MODULE_ID__}.padX`, id: `settings-config-${__MODULE_ID__}.padX` });
+    const padYElem = padYField.toFormGroup({ label: "MINIMAP.SETTINGS.PADDING.Y", localize: true }, { value: game.settings.get(__MODULE_ID__, "padY"), name: `${__MODULE_ID__}.padY`, id: `settings-config-${__MODULE_ID__}.padY` });
+
+
+    padding.innerHTML = `<label>${localize("MINIMAP.SETTINGS.PADDING.NAME")}</label>
+    <div class="form-fields">
+    ${padXElem.innerHTML}
+    ${padYElem.innerHTML}
+    </div>`;
+
+    dimensions.after(padding);
   }
 
 });

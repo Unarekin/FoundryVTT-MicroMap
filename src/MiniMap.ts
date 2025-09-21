@@ -1,13 +1,16 @@
-import { MapMode, MapPosition, MapShape, MapView, OverlaySettings } from './types';
+import { MapMarkerConfig, MapMode, MapPosition, MapShape, MapView, OverlaySettings } from './types';
 import { coerceScene } from './coercion';
 import { logError } from 'logging';
-import { getGame, nineSliceScale } from 'utils';
+import { getEffectiveFlagsForScene, getGame, localize, nineSliceScale } from 'utils';
 import { SceneRenderer } from './SceneRenderer';
 import { synchronizeView } from 'sockets';
 import { LocalizedError } from 'errors';
+import { MapMarkerApplication } from 'applications';
+import { confirm } from 'applications/functions';
 
 export class MiniMap {
   public readonly container = new PIXI.Container();
+  private readonly markerContainer = new PIXI.Container();
 
   private _suppressUpdate = false;
 
@@ -15,6 +18,30 @@ export class MiniMap {
   public static readonly DefaultHeight = 200;
   public static readonly MinZoom = .01;
   public static readonly MaxZoom = 5;
+
+  public get showWeather() { return this.sceneRenderer.showWeather; }
+  public set showWeather(val) { this.sceneRenderer.showWeather = val; }
+
+  public get showDarkness() { return this.sceneRenderer.showDarkness; }
+  public set showDarkness(val) { this.sceneRenderer.showDarkness = val; }
+
+  public get showDrawings() { return this.sceneRenderer.showDrawings; }
+  public set showDrawings(val) { this.sceneRenderer.showDrawings = val; }
+
+  public get showNotes() { return this.sceneRenderer.showNotes; }
+  public set showNotes(val) { this.sceneRenderer.showNotes = val; }
+
+  public readonly mapMarkers: MapMarkerConfig[] = [];
+
+  private _antiAliasing = true;
+  public get antiAliasing() { return this._antiAliasing; }
+  public set antiAliasing(val) {
+    if (this.antiAliasing !== val) {
+      this._antiAliasing = val;
+    }
+
+    this.sceneRenderer.antiAliasing = val;
+  }
 
   #bgSprite: PIXI.Sprite;
   #mapContainer = new PIXI.Container();
@@ -29,7 +56,6 @@ export class MiniMap {
   private _position: MapPosition = "bottomRight";
   private _width = 300;
   private _height = 200;
-  private _padding = 0;
   private _mask = "";
   private _bgColor = "#000000";
   private _panX = 0;
@@ -37,6 +63,7 @@ export class MiniMap {
   private _zoom = 1;
   private _allowPan = true;
   private _allowZoom = true;
+  private _padding = new PIXI.ObservablePoint(() => { this.update(); }, undefined, 0, 0);
 
   public lockGMView = false;
 
@@ -166,14 +193,6 @@ export class MiniMap {
     }
   }
 
-  public get padding() { return this._padding; }
-  public set padding(val) {
-    if (val !== this.padding) {
-      this._padding = val;
-      this.update();
-    }
-  }
-
   public get visible() { return this.container.visible; }
   public set visible(val) {
     if (val !== this.visible) {
@@ -227,6 +246,14 @@ export class MiniMap {
     }
   }
 
+  public get padding(): PIXI.ObservablePoint { return this._padding; }
+  public set padding(val: { x: number, y: number } | number) {
+    if (typeof val === "number") this.padding.set(val, val)
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    else if (val instanceof PIXI.ObservablePoint) this._padding = val;
+    else this.padding.set(val.x ?? 0, val.y ?? 0);
+  }
+
   protected get screenTop() {
     if (game?.release?.isNewer("13")) {
       const uiTop = document.getElementById("scene-navigation-inactive");
@@ -267,7 +294,7 @@ export class MiniMap {
   /**
    * Updates the visuals of our minimap in accordance with its settings.
    */
-  protected update() {
+  public update() {
     if (this._suppressUpdate) return;
     this.staticSprite.visible = this.mode === "image" && !!this.image;
     this.sceneSprite.visible = this.mode === "scene" && !!this.scene;
@@ -293,23 +320,22 @@ export class MiniMap {
     this.#mapContainer.y = this.panY;
 
     if (this.container?.parent) {
-      // TODO: Account for UI elements
       switch (this.position) {
         case "bottomLeft":
-          this.container.x = this.screenLeft + this.padding;
-          this.container.y = this.screenBottom - this.padding;
+          this.container.x = this.screenLeft + this.padding.x;
+          this.container.y = this.screenBottom - this.padding.y;
           break;
         case "bottomRight":
-          this.container.x = this.screenRight - this.padding;
-          this.container.y = this.screenBottom - this.padding;
+          this.container.x = this.screenRight - this.padding.x;
+          this.container.y = this.screenBottom - this.padding.y;
           break;
         case "topLeft":
-          this.container.x = this.screenLeft + this.padding;
-          this.container.y = this.screenTop + this.padding;
+          this.container.x = this.screenLeft + this.padding.x;
+          this.container.y = this.screenTop + this.padding.y;
           break;
         case "topRight":
-          this.container.x = this.screenRight - this.padding;
-          this.container.y = this.screenTop + this.padding;
+          this.container.x = this.screenRight - this.padding.x;
+          this.container.y = this.screenTop + this.padding.y;
           break;
       }
     }
@@ -354,8 +380,273 @@ export class MiniMap {
     });
   }
 
-  protected async getContextMenuItems(): Promise<foundry.applications.ux.ContextMenu.Entry<HTMLElement>[]> {
+  private removeSpriteFilters(sprite: PIXI.DisplayObject, filterType: typeof PIXI.Filter) {
+    if (!sprite.filters?.length) return;
+    const filters = sprite.filters.filter(filter => filter instanceof filterType);
+    if (!filters?.length) return;
+
+    for (const filter of filters) {
+      const index = sprite.filters.indexOf(filter);
+      if (index > -1) sprite.filters.splice(index, 1);
+      filter.destroy();
+    }
+  }
+
+  // #region Map Markers
+
+  private mapMarkerUnderMouse: { config: MapMarkerConfig, sprite: PIXI.DisplayObject } | undefined = undefined;
+
+  protected mapMarkerEnter(e: PIXI.FederatedPointerEvent, marker: MapMarkerConfig, sprite: PIXI.DisplayObject) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    this.removeSpriteFilters(sprite, (PIXI.filters as any).OutlineFilter as typeof PIXI.Filter);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+    const outline = new (PIXI.filters as any).OutlineFilter() as PIXI.Filter;
+    if (Array.isArray(sprite.filters)) sprite.filters.push(outline);
+    else sprite.filters = [outline];
+    this.mapMarkerUnderMouse = {
+      config: marker,
+      sprite
+    };
+
+    if (!marker.showLabel) {
+      const label = sprite.children?.find(child => child instanceof PreciseText);
+      if (label) label.renderable = true;
+    }
+  }
+  protected mapMarkerLeave(e: PIXI.FederatedPointerEvent, marker: MapMarkerConfig, sprite: PIXI.DisplayObject) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    this.removeSpriteFilters(sprite, (PIXI.filters as any).OutlineFilter as typeof PIXI.Filter);
+    this.mapMarkerUnderMouse = undefined;
+    if (!marker.showLabel) {
+      const label = sprite.children?.find(child => child instanceof PreciseText);
+      if (label) label.renderable = false;
+    }
+  }
+
+
+
+
+
+
+  #draggingMarker = "";
+
+  protected mapMarkerMouseDown(e: PIXI.FederatedPointerEvent, marker: MapMarkerConfig, sprite: PIXI.DisplayObject) {
+    getGame()
+      .then(game => {
+        if (game.user.isGM) {
+          // Start drag
+          this.mapMarkerDragStart(e, marker, sprite);
+        }
+      }).catch(logError)
+
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  protected mapMarkerMouseUp(e: PIXI.FederatedPointerEvent, marker: MapMarkerConfig, sprite: PIXI.DisplayObject) {
+    // End drag
+    this.mapMarkerDrop(e);
+  }
+
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  protected mapMarkerDragStart(e: PIXI.FederatedPointerEvent, marker: MapMarkerConfig, sprite: PIXI.DisplayObject) {
+    getGame()
+      .then(game => {
+        if (game.user.isGM) {
+          if (!canvas?.app?.stage) return;
+          this.#draggingMarker = marker.id;
+          if (this.#dragListener) canvas.app.stage.off("pointermove", this.#dragListener);
+          this.#dragListener = this.mapMarkerDrag.bind(this);
+          canvas.app.stage.on("pointermove", this.#dragListener);
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }).catch(logError);
+  }
+
+  protected mapMarkerDrag(e: PIXI.FederatedPointerEvent) {
+    getGame()
+      .then(game => {
+        if (game.user.isGM) {
+          if (this.#draggingMarker) {
+            const marker = this.mapMarkers.find(item => item.id === this.#draggingMarker);
+            if (marker) {
+              e.stopPropagation();
+              e.preventDefault();
+              const global = new PIXI.Point(e.globalX, e.globalY);
+              const local = this.markerContainer.toLocal(global);
+              marker.x = Math.round(local.x)
+              marker.y = Math.round(local.y);
+              this.setMapMarkers(foundry.utils.deepClone(this.mapMarkers));
+            }
+          }
+
+        }
+      }).catch(logError);
+  }
+
+
+  protected mapMarkerDrop(e: PIXI.FederatedPointerEvent) {
+    this.#draggingMarker = "";
+    if (this.#dragListener) {
+      if (canvas?.app?.stage) canvas.app.stage.off("pointermove", this.#dragListener);
+      this.#dragListener = null;
+      e.preventDefault();
+      e.stopPropagation();
+
+      getGame()
+        .then(game => game.settings.set(__MODULE_ID__, "markers", foundry.utils.deepClone(this.mapMarkers)))
+        .catch(logError)
+    }
+  }
+
+  public refreshMapMarkers() {
+    getGame()
+      .then(game => {
+        const markers = game.settings.get(__MODULE_ID__, "markers");
+        this.setMapMarkers(markers);
+      })
+      .catch(logError);
+  }
+
+  public async removeAllMapMarkers() {
+    try {
+      if (!this.mapMarkers?.length) return;
+      const confirmed = await confirm(
+        localize("MINIMAP.MARKERS.CLEAR.TITLE"),
+        localize("MINIMAP.MARKERS.CLEAR.MESSAGE").replaceAll("\n", "<br>\n")
+      );
+      if (!confirmed) return;
+      this.setMapMarkers([]);
+    } catch (err) {
+      logError(err as Error);
+    }
+  }
+
+  public async editMapMarker(marker: MapMarkerConfig) {
+    try {
+      const config = await MapMarkerApplication.edit(foundry.utils.deepClone(marker));
+      if (!config) return;
+      const index = this.mapMarkers.findIndex(item => item.id === marker.id);
+      if (index > -1) this.mapMarkers.splice(index, 1, config);
+      this.setMapMarkers(foundry.utils.deepClone(this.mapMarkers));
+      const game = await getGame();
+      if (!game) return;
+      await game.settings.set(__MODULE_ID__, "markers", foundry.utils.deepClone(this.mapMarkers));
+      // this.addMapMarker(config);
+    } catch (err) {
+      logError(err as Error);
+    }
+  }
+
+  public async removeMapMarker(marker: MapMarkerConfig) {
+    try {
+      const confirmed = await confirm(
+        localize("MINIMAP.MARKERS.REMOVE.TITLE"),
+        localize("MINIMAP.MARKERS.REMOVE.MESSAGE").replaceAll("\n", "<br>\n")
+      );
+      if (!confirmed) return;
+
+      const index = this.mapMarkers.findIndex(item => item.id === marker.id);
+      if (index > -1) {
+        this.mapMarkers.splice(index, 1);
+        this.setMapMarkers(this.mapMarkers);
+        const game = await getGame()
+        await game.settings.set(__MODULE_ID__, "markers", foundry.utils.deepClone(this.mapMarkers));
+      }
+    } catch (err) {
+      logError(err as Error);
+    }
+  }
+
+  public addMapMarker(marker: MapMarkerConfig) {
+    this.mapMarkers.push(marker);
+
+    const container = new PIXI.Container();
+    const sprite = PIXI.Sprite.from(marker.icon);
+
+    sprite.tint = marker.tint;
+    this.markerContainer.addChild(container);
+
+    if (this.mode === "scene")
+      sprite.width = sprite.height = this.scene?.dimensions.size ?? 100;
+    else sprite.width = sprite.height = 100;
+
+    sprite.name = `Map Marker ${marker.id}`;
+    // sprite.texture.baseTexture.setStyle(0, 0);
+    sprite.interactive = true;
+
+    container.addChild(sprite);
+    container.x = marker.x - (container.width / 2);
+    container.y = marker.y - (container.height);
+
+
+    if (marker.dropShadow) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      const shadow = new (PIXI.filters as any).DropShadowFilter() as PIXI.Filter;
+      if (Array.isArray(sprite.filters)) sprite.filters.push(shadow);
+      else sprite.filters = [shadow];
+    }
+
+    const text = new PreciseText(marker.label ?? "");
+    const textStyle = PreciseText.getTextStyle({
+      fontFamily: marker.fontFamily ?? CONFIG.defaultFontFamily,
+      fontSize: marker.fontSize ?? 32,
+      fill: marker.fontColor ?? "#FFFFFF",
+      strokeThickness: 2,
+      dropShadowBlur: marker.dropShadow ? 2 : 0,
+      align: "center",
+      wordWrap: true,
+      wordWrapWidth: sprite.width,
+      padding: 8
+    });
+    // // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+    // text.filters = [new (PIXI.filters as any).OutlineFilter() as PIXI.Filter];
+    text.style = textStyle;
+    text.anchor.x = 0.5;
+
+    container.addChild(text);
+
+    text.x = sprite.width / 2;
+
+    switch (marker.labelAlign) {
+      case "top":
+        text.y = 0;
+        text.anchor.y = 1;
+        break;
+      case "bottom":
+        text.y = sprite.height;
+        text.anchor.y = 0;
+        break;
+    }
+
+    text.renderable = !!marker.label && marker.showLabel;
+
+    sprite.addEventListener("pointerenter", e => { this.mapMarkerEnter(e, marker, container); });
+    sprite.addEventListener("pointerleave", e => { this.mapMarkerLeave(e, marker, container); });
+    sprite.addEventListener("pointerdown", e => { this.mapMarkerMouseDown(e, marker, container); });
+    sprite.addEventListener("pointerup", e => { this.mapMarkerMouseUp(e, marker, container); });
+  }
+
+  protected async createMapMarker(x: number, y: number) {
+    const marker = await MapMarkerApplication.create({ x, y });
+    if (!marker) return;
+    // this.addMapMarker(foundry.utils.deepClone(marker));
+
+    getGame()
+      .then(game => {
+        const markers = game.settings.get(__MODULE_ID__, "markers");
+        return game.settings.set(__MODULE_ID__, "markers", [...foundry.utils.deepClone(markers), foundry.utils.deepClone(marker)])
+      })
+      .catch(logError);
+  }
+
+  // #endregion
+
+  protected async getContextMenuItems(data: { x: number, y: number }): Promise<foundry.applications.ux.ContextMenu.Entry<HTMLElement>[]> {
     const game = await getGame();
+    const currentMapMarker = this.mapMarkerUnderMouse?.config?.id;
+
     return [
       {
         name: "MINIMAP.CONTEXTMENU.SETTINGS",
@@ -373,6 +664,44 @@ export class MiniMap {
           });
           game.settings.sheet.render(true);
         }
+      },
+      {
+        name: "MINIMAP.CONTEXTMENU.MARKERS.ADD",
+        icon: `<i class="fa-solid fa-location-dot"></i>`,
+        condition: () => game.user.isGM && !this.mapMarkerUnderMouse,
+        callback: () => {
+          const localPoint = new PIXI.Point();
+          this.markerContainer.toLocal(new PIXI.Point(data.x, data.y), undefined, localPoint);
+          this.createMapMarker(Math.round(localPoint.x), Math.round(localPoint.y)).catch(logError);
+        }
+      },
+      {
+        name: "MINIMAP.CONTEXTMENU.MARKERS.EDIT",
+        icon: `<i class="fa-solid fa-location-dot"></i>`,
+        condition: () => game.user.isGM && !!this.mapMarkerUnderMouse,
+        callback: () => {
+          if (currentMapMarker) {
+            const config = this.mapMarkers.find(marker => marker.id === currentMapMarker);
+            if (config) void this.editMapMarker(config);
+          }
+        }
+      },
+      {
+        name: "MINIMAP.CONTEXTMENU.MARKERS.REMOVE",
+        icon: `<i class="fa-solid fa-trash"></i>`,
+        condition: () => game.user.isGM && !!this.mapMarkerUnderMouse,
+        callback: () => {
+          if (currentMapMarker) {
+            const config = this.mapMarkers.find(marker => marker.id === currentMapMarker);
+            if (config) void this.removeMapMarker(config);
+          }
+        }
+      },
+      {
+        name: "MINIMAP.CONTEXTMENU.MARKERS.CLEAR",
+        icon: `<i class="fa-solid fa-circle-minus"></i>`,
+        condition: () => game.user.isGM && !!this.mapMarkers.length,
+        callback: () => { void this.removeAllMapMarkers(); }
       },
       {
         name: "MINIMAP.CONTEXTMENU.FIT",
@@ -412,7 +741,7 @@ export class MiniMap {
     try {
       const elem = document.querySelector(`[data-role="minimap-menu"]`);
       if (!(elem instanceof HTMLElement)) throw new LocalizedError("CONTEXTMENUELEMENTNOTFOUND");
-      const menuItems = await this.getContextMenuItems();
+      const menuItems = await this.getContextMenuItems({ x, y });
       if (!menuItems.some(item => typeof item.condition === "function" ? item.condition(elem) : typeof item.condition === "boolean" ? item.condition : true)) return;
 
       // Position parent element
@@ -443,6 +772,8 @@ export class MiniMap {
             menuItems
           ) as foundry.applications.ux.ContextMenu<false>;
         }
+      } else {
+        this._contextMenu.menuItems.splice(0, this._contextMenu.menuItems.length, ...menuItems);
       }
       await this._contextMenu.render(game.release?.isNewer("13") ? elem : $(elem) as unknown as HTMLElement);
     } catch (err) {
@@ -599,7 +930,7 @@ export class MiniMap {
   private async updateViewIfLocked() {
     const game = await getGame();
     if (!this.lockGMView || !game.user.isGM) return;
-    await synchronizeView();
+    synchronizeView();
   }
 
   public get baseWidth() {
@@ -615,22 +946,48 @@ export class MiniMap {
   }
 
   public readonly zoomStep = .025;
-
   protected onWheel(e: WheelEvent) {
     if (!this.visible || !this.allowZoom) return;
     const bounds = this.container.getBounds();
     if (bounds.contains(e.clientX, e.clientY)) {
       e.stopPropagation();
+
+      const localPos = this.#mapContainer.toLocal(new PIXI.Point(e.clientX, e.clientY));
+      const oldX = localPos.x * this.#mapContainer.scale.x;
+      const oldY = localPos.y * this.#mapContainer.scale.y;
+
       if (e.deltaY < 0) this.zoom = Math.min(Math.max(this.zoom + this.zoomStep, MiniMap.MinZoom), MiniMap.MaxZoom);
       else if (e.deltaY > 0) this.zoom = Math.min(Math.max(this.zoom - this.zoomStep, MiniMap.MinZoom), MiniMap.MaxZoom);
+
+      const newX = localPos.x * this.#mapContainer.scale.x;
+      const newY = localPos.y * this.#mapContainer.scale.y;
+
+      this.panX -= (newX - oldX);
+      this.panY -= (newY - oldY);
+
       void this.updateViewIfLocked();
     }
+  }
+
+  protected clearMapMarkers() {
+    this.mapMarkers.splice(0, this.mapMarkers.length);
+    const sprites = [...this.markerContainer.children];
+
+    for (const sprite of sprites)
+      sprite.destroy();
+  }
+
+  protected setMapMarkers(markers: MapMarkerConfig[]) {
+    this.clearMapMarkers();
+    for (const marker of markers)
+      this.addMapMarker(marker);
   }
 
   constructor() {
     this.container.name = "MiniMap Container";
     this.container.sortableChildren = true;
     this.container.interactive = true;
+    this.container.interactiveChildren = true;
     this.container.eventMode = "dynamic";
 
     if (this.image)
@@ -643,6 +1000,7 @@ export class MiniMap {
     const overlayTexture = this.overlay ? PIXI.Texture.from(this.overlay) : PIXI.Texture.from(`modules/${__MODULE_ID__}/assets/transparent.webp`);
     this.overlayPlane = new PIXI.NineSlicePlane(overlayTexture, 0, 0, 0, 0);
     this.overlayPlane.name = "Overlay Plane";
+    this.overlayPlane.eventMode = "none";
 
     this.sceneSprite = new PIXI.Sprite();
     this.sceneSprite.interactiveChildren = false;
@@ -651,15 +1009,21 @@ export class MiniMap {
     this.#bgSprite = new PIXI.Sprite(PIXI.Texture.WHITE);
     this.#bgSprite.name = "Background Sprite";
 
+    this.markerContainer.name = "Map Markers";
+    this.markerContainer.zIndex = 10000;
+
     this.container.addChild(this.#bgSprite);
     this.#mapContainer.addChild(this.staticSprite);
     this.#mapContainer.addChild(this.sceneSprite);
+    this.#mapContainer.addChild(this.markerContainer);
     this.container.addChild(this.#mapContainer);
     this.container.addChild(this.overlayPlane);
 
     this.#mapContainer.name = "Internal Container";
 
     this.sceneRenderer = new SceneRenderer(this.sceneSprite);
+
+
 
     if (!this.staticSprite.texture.valid)
       this.staticSprite.texture.baseTexture.once("loaded", () => { this.update(); })
@@ -672,8 +1036,20 @@ export class MiniMap {
       if (e.button === 0) this.onDragStart(e);
       else if (e.button === 2) this.onRightClick(e);
     });
-    this.container.addEventListener("pointerup", e => { this.onDragEnd(e); });
-    this.container.addEventListener("pointerupoutside", e => { this.onDragEnd(e); });
+    this.container.addEventListener("pointerup", e => {
+      if (this.#draggingMarker) {
+        this.mapMarkerDrop(e);
+      } else {
+        this.onDragEnd(e);
+      }
+    });
+    this.container.addEventListener("pointerupoutside", e => {
+      if (this.#draggingMarker) {
+        this.mapMarkerDrop(e);
+      } else {
+        this.onDragEnd(e);
+      }
+    });
     // this.container.addEventListener("wheel", e => { this.onWheel(e); })
     const board = document.getElementById("board");
     if (board instanceof HTMLElement) board.addEventListener("wheel", e => { this.onWheel(e); }, true)
@@ -706,20 +1082,30 @@ export class MiniMap {
     getGame()
       .then(game => {
         try {
+          const settings = getEffectiveFlagsForScene(canvas.scene instanceof Scene ? canvas.scene : undefined);
+
           this._suppressUpdate = true;
-          this.visible = !!game.settings.get(__MODULE_ID__, "show");
-          this.position = game.settings.get(__MODULE_ID__, "position") as MapPosition;
-          this.shape = game.settings.get(__MODULE_ID__, "shape") as MapShape;
-          this.padding = game.settings.get(__MODULE_ID__, "padding") as number;
-          this.mask = game.settings.get(__MODULE_ID__, "mask") as string;
-          this.bgColor = game.settings.get(__MODULE_ID__, "bgColor") as string;
+          this.visible = !!settings.show;
+          this.position = settings.position;
+          this.shape = settings.shape;
+          // this.padding = game.settings.get(__MODULE_ID__, "padding");
+          this.padding.x = settings.padX;
+          this.padding.y = settings.padY;
 
-          this.height = game.settings.get(__MODULE_ID__, "height") as number;
-          this.width = game.settings.get(__MODULE_ID__, "width") as number;
+          this.mask = settings.mask;
+          this.bgColor = settings.bgColor;
 
-          this.mode = game.settings.get(__MODULE_ID__, "mode") as MapMode;
-          this.image = game.settings.get(__MODULE_ID__, "image") as string;
-          this.scene = game.settings.get(__MODULE_ID__, "scene") as string;
+          this.height = settings.height;
+          this.width = settings.width;
+
+          this.mode = settings.mode;
+          this.image = settings.image ?? "";
+          this.scene = settings.scene;
+
+          this.showWeather = settings.showWeather;
+          this.showDarkness = settings.showDarkness;
+          this.showDrawings = settings.showDrawings;
+          this.showNotes = settings.showNotes;
 
           this.allowPan = game.settings.get(__MODULE_ID__, "unlockPlayers") as boolean;
           this.allowZoom = game.settings.get(__MODULE_ID__, "unlockPlayers") as boolean;
@@ -734,9 +1120,13 @@ export class MiniMap {
             this.zoom = view.zoom;
           }
 
-          const overlaySettings = game.settings.get(__MODULE_ID__, "overlaySettings") as OverlaySettings;
+          const overlaySettings = game.settings.get(__MODULE_ID__, "overlaySettings");
           this.setOverlayFromSettings(overlaySettings);
+
           this.setMask(this.shape);
+
+
+          return this.setMapMarkers(game.settings.get(__MODULE_ID__, "markers"));
         } catch (err) {
           logError(err as Error);
         } finally {

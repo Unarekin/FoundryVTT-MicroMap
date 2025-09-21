@@ -1,3 +1,4 @@
+import { MapMarkerConfig } from "types";
 
 export interface OverlaySettingsRenderContext extends foundry.applications.api.ApplicationV2.RenderContext {
   file: string;
@@ -7,4 +8,17 @@ export interface OverlaySettingsRenderContext extends foundry.applications.api.A
   bottom: number;
 
   buttons: foundry.applications.api.ApplicationV2.FormFooterButton[];
+}
+
+export interface MapMarkerRenderContext extends foundry.applications.api.ApplicationV2.RenderContext {
+  marker: MapMarkerConfig;
+  idPrefix: string;
+  fontSelect: Record<string, string>;
+  labelAlignSelect: Record<string, string>;
+  buttons: foundry.applications.api.ApplicationV2.FormFooterButton[];
+}
+
+export interface MapMarkerSettingsRenderContext extends foundry.applications.api.ApplicationV2.RenderContext {
+  buttons: foundry.applications.api.ApplicationV2.FormFooterButton[];
+  markers: MapMarkerConfig[];
 }

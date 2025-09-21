@@ -1,0 +1,37 @@
+{
+  "MINIMAP": {
+    "MARKERS": {
+      "CREATE": "Create Map Marker",
+      "EDIT": "Edit Map Marker",
+      "REMOVE": {
+        "TITLE": "Remove Map Marker",
+        "MESSAGE": "Are you sure you wish to remove this map marker?\nThis cannot be undone."
+      },
+      "CLEAR": {
+        "TITLE": "Remove All Map Markers",
+        "MESSAGE": "Are you sure you wish to remove all map markers?\nThis cannot be undone."
+      },
+      "LABEL": {
+        "NAME": "Label",
+        "HINT": ""
+      },
+      "DROPSHADOW": {
+        "NAME": "Drop Shadow",
+        "HINT": ""
+      },
+      "SHOWLABEL": {
+        "NAME": "Show Label",
+        "HINT": ""
+      },
+      "ICON": {
+        "NAME": "Icon"
+      },
+      "LABELALIGN": {
+        "NAME": "Label Alignment",
+        "HINT": "",
+        "TOP": "Top",
+        "BOTTOM": "Bottom"
+      }
+    }
+  }
+}

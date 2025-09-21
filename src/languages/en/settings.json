@@ -1,19 +1,58 @@
 {
   "MINIMAP": {
     "SETTINGS": {
+      "ANTIALIASING": {
+        "HINT": "When this option is enabled, items drawn on the minimap won't be antialias when they're scaled, causing them to appear sharper.",
+        "NAME": "Disable AntiAliasing"
+      },
+      "RESETOVERRIDES": {
+        "NAME": "Reset to Default",
+        "HINT": "Reset this scene's override settings to the global defaults."
+      },
+      "SHOWWEATHER": {
+        "NAME": "Show Weather Effects",
+        "HINT": "If enabled, will show weather effects for scene-type minimaps."
+      },
+      "SHOWDARKNESS": {
+        "NAME": "Show Darkness",
+        "HINT": "If enabled, will show general darkness level for scene-type minimaps."
+      },
+      "SHOWDRAWINGS": {
+        "NAME": "Show Drawings",
+        "HINT": "If enabled, will show drawings for scene-type minimaps."
+      },
+      "SHOWNOTES": {
+        "NAME": "Show Map Notes",
+        "HINT": "If enabled, will show map notes for scene-type minimaps."
+      },
+      "BGCOLOR": {
+        "HINT": "The background color to use on the minimap",
+        "NAME": "Background Color"
+      },
+      "ENABLE": {
+        "HINT": "If enabled, will enable the minimap.",
+        "NAME": "Enable MiniMap"
+      },
+      "LOCKGMVIEW": {
+        "HINT": "If enabled, will force players' view to match the GM's.",
+        "NAME": "Lock To GM View"
+      },
+      "MARKERS": {
+        "BUTTON": "Configure Map Markers",
+        "HINT": "Configure map markers",
+        "NAME": "Map Markers",
+        "CLEAR": "Remove All Markers",
+        "EXPORT": "Export Map Markers",
+        "IMPORT": "Import Map Markers",
+        "EDIT": "Edit Map Marker",
+        "REMOVE": "Remove Map Marker"
+      },
       "MASK": {
         "HINT": "An image to use as a mask for shaping the minimap.",
         "NAME": "Image Mask"
       },
       "MODE": {
         "NAME": "MiniMap Image Mode"
-      },
-      "LOCKGMVIEW": {
-        "NAME": "Lock To GM View",
-        "HINT": "If enabled, will force players' view to match the GM's."
-      },
-      "UNLOCKPLAYERS": {
-        "NAME": "Allow Players to Pan/Zoom MiniMap"
       },
       "OVERLAY": {
         "BORDERS": "Borders",
@@ -23,12 +62,14 @@
         "LEFT": "Left",
         "NAME": "MiniMap Overlay",
         "RIGHT": "Right",
-        "TOP": "Top",
-        "SHOW": "Show Overlay"
+        "SHOW": "Show Overlay",
+        "TOP": "Top"
       },
       "PADDING": {
         "HINT": "Space, in pixels, from the edge of the canvas area.",
-        "NAME": "Padding"
+        "NAME": "Padding",
+        "X": "X",
+        "Y": "Y"
       },
       "POSITION": {
         "BOTTOMLEFT": "Bottom Left",
@@ -47,12 +88,11 @@
         "RECTANGLE": "Rectangular"
       },
       "SHOW": {
-        "HINT": "If enabled, will show the minimap.",
-        "NAME": "Show MiniMap"
+        "HINT": "Show or hide the minimap.",
+        "NAME": "Toggle MiniMap"
       },
-      "BGCOLOR": {
-        "NAME": "Background Color",
-        "HINT": "The background color to use on the minimap"
+      "UNLOCKPLAYERS": {
+        "NAME": "Allow Players to Pan/Zoom MiniMap"
       }
     }
   }

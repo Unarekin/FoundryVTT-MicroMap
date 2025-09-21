@@ -9,10 +9,6 @@ export class MiniatureMapCanvasGroup extends PIXI.Container {
 
   constructor() {
     super();
-    this.interactiveChildren = false;
-    this.interactive = false;
-    this.eventMode = "none";
-
     this.name = "MiniatureMapCanvasGroup";
 
     if (canvas?.app) {
@@ -25,5 +21,8 @@ export class MiniatureMapCanvasGroup extends PIXI.Container {
     this.addChild(this.miniMap.container);
     this.interactiveChildren = true;
     this.interactive = true;
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    (ui as any).microMap = this.miniMap;
   }
 }

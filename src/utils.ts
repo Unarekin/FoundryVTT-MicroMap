@@ -1,6 +1,7 @@
 import { LocalizedError } from "errors";
 import { MiniatureMapCanvasGroup } from "MiniatureMapCanvasGroup";
 import { MiniMap } from "MiniMap";
+import { DeepPartial, DefaultNoteFlags, NoteFlags, SceneFlags, MapPosition, MapShape, MapMode } from "types";
 
 let gameReadyPromise: Promise<void> | undefined = undefined;
 
@@ -65,4 +66,104 @@ export async function nineSliceScale(source: PIXI.TextureSource, width: number, 
   ctx.drawImage(sourceCanvas, sprite.width - right, sprite.height - bottom, right, bottom, width - right, height - bottom, right, bottom);
 
   return output;
+}
+
+export function getNoteFlags(note: NoteDocument): NoteFlags {
+  const flags = foundry.utils.deepClone(DefaultNoteFlags);
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  const setFlags = (note.flags as any)["micro-map"] as Partial<NoteFlags>;
+  if (typeof setFlags?.show === "boolean") flags.show = setFlags.show;
+  if (typeof setFlags?.showBG === "boolean") flags.showBG = setFlags.showBG;
+  if (typeof setFlags?.showLabel === "boolean") flags.showLabel = setFlags.showLabel;
+  return flags;
+}
+
+export function defaultSceneFlags(): SceneFlags {
+  return {
+    override: false,
+    show: game?.settings?.get(__MODULE_ID__, "enable") ?? false,
+    width: game?.settings?.get(__MODULE_ID__, "width") ?? 256,
+    height: game?.settings?.get(__MODULE_ID__, "height") ?? 256,
+    mode: (game?.settings?.get(__MODULE_ID__, "mode") ?? "image") as MapMode,
+    image: game?.settings?.get(__MODULE_ID__, "image") ?? "",
+    scene: game?.settings?.get(__MODULE_ID__, "scene") ?? "",
+    position: (game?.settings?.get(__MODULE_ID__, "position") ?? "bottomright") as MapPosition,
+    bgColor: game?.settings?.get(__MODULE_ID__, "bgColor") ?? "#000000",
+    padX: game?.settings?.get(__MODULE_ID__, "padX") ?? 0,
+    padY: game?.settings?.get(__MODULE_ID__, "padY") ?? 0,
+    shape: (game?.settings?.get(__MODULE_ID__, "shape") ?? "square") as MapShape,
+    mask: game?.settings?.get(__MODULE_ID__, "mask") ?? "",
+    showWeather: game?.settings?.get(__MODULE_ID__, "showWeather") ?? true,
+    showDarkness: game?.settings?.get(__MODULE_ID__, "showDarkness") ?? true,
+    showDrawings: game?.settings?.get(__MODULE_ID__, "showDrawings") ?? true,
+    showNotes: game?.settings?.get(__MODULE_ID__, "showNotes") ?? true,
+    overlaySettings: game?.settings?.get(__MODULE_ID__, "overlaySettings") ?? {
+      visible: false,
+      file: "",
+      left: 0,
+      right: 0,
+      top: 0,
+      bottom: 0
+    }
+  };
+}
+
+export function getSceneFlags(scene: Scene): SceneFlags {
+  const flags = defaultSceneFlags();
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  const setFlags = (scene.flags as any)["micro-map"] as DeepPartial<SceneFlags>;
+
+  foundry.utils.mergeObject(flags, setFlags);
+  return flags;
+}
+
+export function getEffectiveFlagsForScene(scene?: Scene): SceneFlags {
+  const defaultFlags = defaultSceneFlags();
+  if (scene) {
+    const sceneFlags = getSceneFlags(scene);
+    return sceneFlags.override ? sceneFlags : defaultFlags;
+  } else {
+    return defaultFlags;
+  }
+
+}
+
+
+export function downloadJSON(json: object, name?: string) {
+  const blob = new Blob([JSON.stringify(json, null, 2)], { type: "application/json" });
+  const objUrl = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = objUrl;
+  if (name) link.download = name.endsWith(".json") ? name : `${name}.json`;
+  else link.download = "";
+  link.click();
+  URL.revokeObjectURL(objUrl);
+}
+
+export function uploadJSON<t = any>(): Promise<t> {
+  return new Promise<t>((resolve, reject) => {
+    const file = document.createElement("input");
+    file.setAttribute("type", "file");
+    file.setAttribute("accept", "application/json");
+    file.onchange = e => {
+      const file = (e.currentTarget as HTMLInputElement).files?.[0];
+      if (!file) {
+        reject(new LocalizedError("NOFILE"));
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = e => {
+        if (!e.target?.result) throw new LocalizedError("NOFILE");
+        if (typeof e.target.result === "string") resolve(JSON.parse(e.target.result) as t);
+      }
+      reader.readAsText(file);
+    }
+    file.onerror = (event, source, line, col, error) => {
+      if (error) reject(error);
+      else reject(new Error(typeof event === "string" ? event : typeof undefined));
+    }
+
+    file.click();
+  });
 }

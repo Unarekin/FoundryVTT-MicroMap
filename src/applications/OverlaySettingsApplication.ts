@@ -2,6 +2,7 @@ import { logError } from "logging";
 import { OverlaySettingsRenderContext } from "./types";
 import { LocalizedError } from '../errors';
 import { getGame } from "utils";
+import { OverlaySettings } from "types";
 
 export class OverlaySettingsApplication extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.api.ApplicationV2) {
   public static readonly DEFAULT_OPTIONS = {
@@ -27,12 +28,31 @@ export class OverlaySettingsApplication extends foundry.applications.api.Handleb
     }
   }
 
+  #submitted = false;
   public static onSubmit(this: OverlaySettingsApplication, e: Event | SubmitEvent, elem: HTMLFormElement, formData: FormDataExtended) {
     const data = foundry.utils.expandObject(formData.object) as Record<string, unknown>;
 
-    getGame()
-      .then(game => game.settings.set(__MODULE_ID__, "overlaySettings", data))
-      .catch((err: Error) => { logError(err); })
+    if (this.#promise && this.#resolve) {
+      this.#submitted = true;
+      this.#resolve(data as unknown as OverlaySettings);
+    } else {
+      getGame()
+        .then(game => game.settings.set(__MODULE_ID__, "overlaySettings", data as unknown as OverlaySettings))
+        .catch((err: Error) => { logError(err); })
+    }
+  }
+
+  protected _onClose(options: foundry.applications.api.ApplicationV2.RenderOptions): void {
+    if (!this.#submitted && this.#resolve)
+      this.#resolve(undefined);
+
+    this.#submitted = false;
+    this.#promise = undefined;
+    this.#resolve = undefined;
+    this.#reject = undefined;
+    this.#settings = undefined;
+
+    return super._onClose(options);
   }
 
   _onChangeForm(config: foundry.applications.api.ApplicationV2.FormConfiguration, event: Event) {
@@ -148,6 +168,7 @@ export class OverlaySettingsApplication extends foundry.applications.api.Handleb
       ]
     }
 
+    if (this.#settings) foundry.utils.mergeObject(context, this.#settings);
 
     return context;
   }
@@ -156,5 +177,27 @@ export class OverlaySettingsApplication extends foundry.applications.api.Handleb
     await super._onRender(context, options);
     const { top, bottom, left, right } = context;
     await this.drawPreview(context.file, { top, bottom, left, right });
+  }
+
+  #promise: Promise<OverlaySettings | undefined> | undefined = undefined;
+  #resolve: ((res: OverlaySettings | undefined) => void) | undefined = undefined;
+  // eslint-disable-next-line no-unused-private-class-members
+  #reject: ((err: Error) => void) | undefined = undefined;
+  #settings: OverlaySettings | undefined = undefined;
+
+  public static configure(settings: OverlaySettings): Promise<OverlaySettings | undefined> {
+    const app = new OverlaySettingsApplication();
+    return app.configure(settings);
+  }
+
+  public async configure(settings: OverlaySettings): Promise<OverlaySettings | undefined> {
+    this.#promise = new Promise<OverlaySettings | undefined>((resolve, reject) => {
+      this.#resolve = resolve;
+      this.#reject = reject;
+    });
+
+    this.#settings = settings;
+    await this.render(true)
+    return this.#promise;
   }
 }

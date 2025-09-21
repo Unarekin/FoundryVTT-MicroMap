@@ -1,9 +1,11 @@
 {
   "MINIMAP": {
     "ERRORS": {
-      "FILENOTFOUND": "File not found: {file}",
       "CONTEXTMENUELEMENTNOTFOUND": "Container element for context menu not found",
-      "NOTINITIALIZED": "Renderer not initialized"
+      "FILENOTFOUND": "File not found: {file}",
+      "NOFILE": "No file loaded.",
+      "NOTINITIALIZED": "Renderer not initialized",
+      "SOCKETNOTINITIALIZED": "Websocket not initialized"
     }
   }
 }

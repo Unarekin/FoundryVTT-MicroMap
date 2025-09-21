@@ -1,3 +1,12 @@
 {
-  "MINIMAP": {}
+  "MINIMAP": {
+    "TITLE": "MicroMap"
+  },
+  "SCENE": {
+    "TABS": {
+      "SHEET": {
+        "micromap": "MicroMap"
+      }
+    }
+  }
 }
