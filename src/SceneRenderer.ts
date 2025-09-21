@@ -14,6 +14,15 @@ export class SceneRenderer {
   private bgImageSprite: PIXI.Sprite;
   private fgImageSprite: PIXI.Sprite;
   private darknessSprite: PIXI.Sprite;
+
+  private _showWeather = true;
+  public get showWeather() { return this._showWeather; }
+  public set showWeather(val) {
+    if (this.showWeather !== val) {
+      this._showWeather = val;
+      this.weatherContainer.renderable = val;
+    }
+  }
   public readonly weatherContainer = new PIXI.Container();
 
   private _antiAliasing = true;

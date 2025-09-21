@@ -73,6 +73,7 @@ export interface SceneFlags {
   shape: MapShape;
   mask: string;
   overlaySettings: OverlaySettings;
+  showWeather: boolean;
 }
 
 export const MESSAGE_TYPES = ["sync"] as const;

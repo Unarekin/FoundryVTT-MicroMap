@@ -93,6 +93,7 @@ export function defaultSceneFlags(): SceneFlags {
     padY: game?.settings?.get(__MODULE_ID__, "padY") ?? 0,
     shape: (game?.settings?.get(__MODULE_ID__, "shape") ?? "square") as MapShape,
     mask: game?.settings?.get(__MODULE_ID__, "mask") ?? "",
+    showWeather: game?.settings?.get(__MODULE_ID__, "showWeather") ?? true,
     overlaySettings: game?.settings?.get(__MODULE_ID__, "overlaySettings") ?? {
       visible: false,
       file: "",

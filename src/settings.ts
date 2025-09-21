@@ -25,7 +25,11 @@ declare global {
     "micro-map.padX": number;
     "micro-map.padY": number;
     "micro-map.disableAntiAliasing": boolean;
-    "micro-map.markers": MapMarkerConfig[]
+    "micro-map.markers": MapMarkerConfig[];
+    "micro-map.showWeather": boolean;
+    "micro-map.showDarkness": boolean;
+    "micro-map.showDrawings": boolean;
+    "micro-map.showNotes": boolean;
   }
 }
 
@@ -166,6 +170,21 @@ Hooks.once("init", () => {
           map.scene = id;
         }
       });
+
+      game.settings.register(__MODULE_ID__, "showWeather", {
+        name: "MINIMAP.SETTINGS.SHOWWEATHER.NAME",
+        hint: "MINIMAP.SETTINGS.SHOWWEATHER.HINT",
+        config: true,
+        scope: "world",
+        type: Boolean,
+        default: true,
+        requiresReload: false,
+        onChange(val: boolean) {
+          const map = getMiniMap();
+          if (!(map instanceof MiniMap)) return;
+          map.showWeather = val;
+        }
+      })
 
       game.settings.register(__MODULE_ID__, "position", {
         name: "MINIMAP.SETTINGS.POSITION.NAME",

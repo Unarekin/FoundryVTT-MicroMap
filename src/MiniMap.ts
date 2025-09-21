@@ -19,6 +19,9 @@ export class MiniMap {
   public static readonly MinZoom = .01;
   public static readonly MaxZoom = 5;
 
+  public get showWeather() { return this.sceneRenderer.showWeather; }
+  public set showWeather(val) { this.sceneRenderer.showWeather = val; }
+
   public readonly mapMarkers: MapMarkerConfig[] = [];
 
   private _antiAliasing = true;
@@ -1076,6 +1079,8 @@ export class MiniMap {
           this.mode = settings.mode;
           this.image = settings.image ?? "";
           this.scene = settings.scene;
+
+          this.showWeather = settings.showWeather;
 
           this.allowPan = game.settings.get(__MODULE_ID__, "unlockPlayers") as boolean;
           this.allowZoom = game.settings.get(__MODULE_ID__, "unlockPlayers") as boolean;
