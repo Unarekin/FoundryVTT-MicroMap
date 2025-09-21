@@ -946,14 +946,25 @@ export class MiniMap {
   }
 
   public readonly zoomStep = .025;
-
   protected onWheel(e: WheelEvent) {
     if (!this.visible || !this.allowZoom) return;
     const bounds = this.container.getBounds();
     if (bounds.contains(e.clientX, e.clientY)) {
       e.stopPropagation();
+
+      const localPos = this.#mapContainer.toLocal(new PIXI.Point(e.clientX, e.clientY));
+      const oldX = localPos.x * this.#mapContainer.scale.x;
+      const oldY = localPos.y * this.#mapContainer.scale.y;
+
       if (e.deltaY < 0) this.zoom = Math.min(Math.max(this.zoom + this.zoomStep, MiniMap.MinZoom), MiniMap.MaxZoom);
       else if (e.deltaY > 0) this.zoom = Math.min(Math.max(this.zoom - this.zoomStep, MiniMap.MinZoom), MiniMap.MaxZoom);
+
+      const newX = localPos.x * this.#mapContainer.scale.x;
+      const newY = localPos.y * this.#mapContainer.scale.y;
+
+      this.panX -= (newX - oldX);
+      this.panY -= (newY - oldY);
+
       void this.updateViewIfLocked();
     }
   }
