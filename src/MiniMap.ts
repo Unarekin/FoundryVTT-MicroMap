@@ -436,7 +436,7 @@ export class MiniMap {
   protected mapMarkerMouseDown(e: PIXI.FederatedPointerEvent, marker: MapMarkerConfig, sprite: PIXI.DisplayObject) {
     getGame()
       .then(game => {
-        if (game.user.isGM) {
+        if (game.user.isGM && e.button === 0) {
           // Start drag
           this.mapMarkerDragStart(e, marker, sprite);
         }
@@ -521,6 +521,8 @@ export class MiniMap {
       );
       if (!confirmed) return;
       this.setMapMarkers([]);
+      const game = await getGame()
+      await game.settings.set(__MODULE_ID__, "markers", foundry.utils.deepClone(this.mapMarkers));
     } catch (err) {
       logError(err as Error);
     }
