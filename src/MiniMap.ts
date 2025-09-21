@@ -553,7 +553,7 @@ export class MiniMap {
       const index = this.mapMarkers.findIndex(item => item.id === marker.id);
       if (index > -1) {
         this.mapMarkers.splice(index, 1);
-        this.setMapMarkers(this.mapMarkers);
+        this.setMapMarkers(foundry.utils.deepClone(this.mapMarkers));
         const game = await getGame()
         await game.settings.set(__MODULE_ID__, "markers", foundry.utils.deepClone(this.mapMarkers));
       }
