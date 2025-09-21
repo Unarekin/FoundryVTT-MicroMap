@@ -29,7 +29,7 @@
   <div class="form-group slim">
     <label>{{localize "Position"}}</label>
     <div class="form-fields">
-      <label for="{{idPrefix}}-x">{{localize "DOCUMENT.FIELDS.x.label"}}</label>
+      <label for="{{idPrefix}}-x">{{localize "MINIMAP.MARKERS.X"}}</label>
       <input
         type="number"
         name="x"
@@ -38,7 +38,7 @@
         step="1"
         value="{{marker.x}}"
       />
-      <label for="{{idPrefix}}-y">{{localize "DOCUMENT.FIELDS.y.label"}}</label>
+      <label for="{{idPrefix}}-y">{{localize "MINIMAP.MARKERS.Y"}}</label>
       <input
         type="number"
         name="y"
@@ -131,9 +131,11 @@
   </fieldset>
 
   <fieldset>
-    <legend>{{localize "NOTE.SECTIONS.ICON"}}</legend>
+    <legend>{{localize "MINIMAP.MARKERS.ICON.NAME"}}</legend>
     <div class="form-group">
-      <label for="{{idPrefix}}-icon">{{localize "NOTE.SECTIONS.ICON"}}</label>
+      <label for="{{idPrefix}}-icon">{{localize
+          "MINIMAP.MARKERS.ICON.NAME"
+        }}</label>
       <file-picker
         type="image"
         name="icon"
@@ -145,7 +147,7 @@
 
     <div class="form-group">
       <label for="{{idPrefix}}-tint">{{localize
-          "TOKEN.FIELDS.texture.tint.label"
+          "MINIMAP.MARKERS.TINT.NAME"
         }}</label>
       <color-picker
         name="tint"

@@ -1,37 +1,43 @@
 {
   "MINIMAP": {
     "MARKERS": {
-      "CREATE": "Create Map Marker",
-      "EDIT": "Edit Map Marker",
-      "REMOVE": {
-        "TITLE": "Remove Map Marker",
-        "MESSAGE": "Are you sure you wish to remove this map marker?\nThis cannot be undone."
-      },
       "CLEAR": {
-        "TITLE": "Remove All Map Markers",
-        "MESSAGE": "Are you sure you wish to remove all map markers?\nThis cannot be undone."
+        "MESSAGE": "Are you sure you wish to remove all map markers?\nThis cannot be undone.",
+        "TITLE": "Remove All Map Markers"
       },
-      "LABEL": {
-        "NAME": "Label",
-        "HINT": ""
-      },
+      "CREATE": "Create Map Marker",
       "DROPSHADOW": {
-        "NAME": "Drop Shadow",
-        "HINT": ""
+        "HINT": "",
+        "NAME": "Drop Shadow"
       },
-      "SHOWLABEL": {
-        "NAME": "Show Label",
-        "HINT": ""
-      },
+      "EDIT": "Edit Map Marker",
       "ICON": {
         "NAME": "Icon"
       },
-      "LABELALIGN": {
-        "NAME": "Label Alignment",
+      "LABEL": {
         "HINT": "",
-        "TOP": "Top",
-        "BOTTOM": "Bottom"
-      }
+        "NAME": "Label"
+      },
+      "LABELALIGN": {
+        "BOTTOM": "Bottom",
+        "HINT": "",
+        "NAME": "Label Alignment",
+        "TOP": "Top"
+      },
+      "REMOVE": {
+        "MESSAGE": "Are you sure you wish to remove this map marker?\nThis cannot be undone.",
+        "TITLE": "Remove Map Marker"
+      },
+      "SHOWLABEL": {
+        "HINT": "",
+        "NAME": "Show Label"
+      },
+      "TINT": {
+        "HINT": "",
+        "NAME": "Tint"
+      },
+      "X": "X",
+      "Y": "Y"
     }
   }
 }
