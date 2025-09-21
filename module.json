@@ -21,7 +21,7 @@
     "systems": [],
     "requires": []
   },
-  "esmodules": ["module.js"],
+  "esmodules": ["module.js", "vendor/pixi-filters.js"],
   "scripts": [],
   "styles": ["styles/module.css"],
   "languages": [

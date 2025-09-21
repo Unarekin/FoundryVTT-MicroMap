@@ -1,4 +1,3 @@
-import { logError } from "logging";
 import { NoteFlags } from "../types";
 import { getNoteFlags } from "utils";
 
@@ -13,7 +12,7 @@ export function NoteConfigV2Mixin(Base: typeof foundry.applications.sheets.NoteC
       const content = await renderTemplate(`modules/${__MODULE_ID__}/templates/NoteConfig.hbs`, {
         note: this.document,
         flags,
-        idPrefix: this.document.uuid.replaceAll(".", "-")
+        idPrefix: this.document?.uuid ? this.document.uuid.replaceAll(".", "-") : ""
       });
 
       const section = this.element.querySelector(`fieldset[data-role="micro-map"]`);
@@ -32,9 +31,8 @@ export function NoteConfigV2Mixin(Base: typeof foundry.applications.sheets.NoteC
           [__MODULE_ID__]: data
         }
       };
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      this.document.update(update as any)
-        .catch(logError);
+
+      foundry.utils.mergeObject(parsed, update);
 
       return parsed;
     }
