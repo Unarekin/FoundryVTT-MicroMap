@@ -201,6 +201,21 @@ Hooks.once("init", () => {
         }
       });
 
+      game.settings.register(__MODULE_ID__, "showDrawings", {
+        name: "MINIMAP.SETTINGS.SHOWDRAWINGS.NAME",
+        hint: "MINIMAP.SETTINGS.SHOWDRAWINGS.HINT",
+        config: true,
+        scope: "world",
+        type: Boolean,
+        default: true,
+        requiresReload: false,
+        onChange(val: boolean) {
+          const map = getMiniMap();
+          if (!(map instanceof MiniMap)) return;
+          map.showDrawings = val;
+        }
+      })
+
       game.settings.register(__MODULE_ID__, "position", {
         name: "MINIMAP.SETTINGS.POSITION.NAME",
         hint: "MINIMAP.SETTINGS.POSITION.HINT",

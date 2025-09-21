@@ -85,6 +85,7 @@ function updateMap(scene: Scene) {
   map.position = settings.position;
   map.showWeather = settings.showWeather;
   map.showDarkness = settings.showDarkness;
+  map.showDrawings = settings.showDrawings;
   map.setOverlayFromSettings(settings.overlaySettings);
 }
 

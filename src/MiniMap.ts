@@ -25,6 +25,9 @@ export class MiniMap {
   public get showDarkness() { return this.sceneRenderer.showDarkness; }
   public set showDarkness(val) { this.sceneRenderer.showDarkness = val; }
 
+  public get showDrawings() { return this.sceneRenderer.showDrawings; }
+  public set showDrawings(val) { this.sceneRenderer.showDrawings = val; }
+
   public readonly mapMarkers: MapMarkerConfig[] = [];
 
   private _antiAliasing = true;
@@ -1086,6 +1089,7 @@ export class MiniMap {
 
           this.showWeather = settings.showWeather;
           this.showDarkness = settings.showDarkness;
+          this.showDrawings = settings.showDrawings;
 
           this.allowPan = game.settings.get(__MODULE_ID__, "unlockPlayers") as boolean;
           this.allowZoom = game.settings.get(__MODULE_ID__, "unlockPlayers") as boolean;

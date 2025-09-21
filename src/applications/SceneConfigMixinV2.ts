@@ -2,7 +2,7 @@ import { getSceneFlags } from "utils";
 import { sceneConfigSelectOptions } from "./functions";
 import { MapMode, MapShape, OverlaySettings, SceneFlags } from "types";
 import { OverlaySettingsApplication } from "./OverlaySettingsApplication";
-import { log, logError } from "logging";
+import { logError } from "logging";
 
 export function SceneConfigV2Mixin(Base: typeof foundry.applications.sheets.SceneConfig) {
   class SceneConfigV2 extends Base {
@@ -42,7 +42,6 @@ export function SceneConfigV2Mixin(Base: typeof foundry.applications.sheets.Scen
           });
         }
 
-        log("Setting:", update);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         this.document.update(update as any).catch(logError);
       }

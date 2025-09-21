@@ -9,6 +9,7 @@ type SceneDocument = TileDocument | TokenDocument | DrawingDocument | NoteDocume
 export class SceneRenderer {
   private _active = false;
   private _weatherHandler;
+  private _initialized = false;
 
   private bgColorSprite: PIXI.Sprite;
   private bgImageSprite: PIXI.Sprite;
@@ -30,6 +31,15 @@ export class SceneRenderer {
     if (this.showDarkness !== val) {
       this._showDarkness = val;
       this.darknessSprite.renderable = val;
+    }
+  }
+
+  private _showDrawings = true;
+  public get showDrawings() { return this._showDrawings; }
+  public set showDrawings(val) {
+    if (this.showDrawings !== val) {
+      this._showDrawings = val;
+      if (this._initialized) this.refreshDocuments();
     }
   }
 
@@ -68,6 +78,8 @@ export class SceneRenderer {
   }
 
   private shouldProcessDocument(doc: SceneDocument): boolean {
+    if (doc instanceof DrawingDocument && !this.showDrawings) return false;
+
     if (!this.active) return false;
     if (!(doc.parent instanceof Scene)) return false;
     if (doc.parent !== this.scene) return false;
@@ -113,16 +125,19 @@ export class SceneRenderer {
   }
 
   private setBgTexture(texture: PIXI.Texture) {
-    if (!this.scene) return;
+    if (!this.scene || !this.bgImageSprite) return;
+
     const oldTexture = this.bgImageSprite.texture;
     this.bgImageSprite.texture = texture;
-    oldTexture.destroy();
+    if (oldTexture) oldTexture.destroy();
+
 
     this.bgImageSprite.width = this.scene.width!;
     this.bgImageSprite.height = this.scene.height!;
 
     this.bgImageSprite.visible = true;
     this.bgImageSprite.zIndex = -10000;
+
   }
 
   private drawBackgroundImage() {
@@ -242,27 +257,34 @@ export class SceneRenderer {
 
   private initializeScene() {
     try {
+      this._initialized = false;
       if (!this.scene) return;
       if (!this.active) return;
 
+      this.refreshDocuments();
 
-      // Clean out old sprites
-      const entries = Object.entries(this.sprites);
-      entries.forEach(([uuid, sprite]) => {
-        sprite.destroy();
-        delete this.sprites[uuid];
-      });
-
-      // Add tokens and tiles
-      this.scene.tokens.forEach(doc => { this.documentAdded(doc); });
-      this.scene.tiles.forEach(doc => { this.documentAdded(doc); });
-      this.scene.drawings.forEach(doc => { this.documentAdded(doc); });
-      this.scene.notes.forEach(doc => { this.documentAdded(doc); });
 
       this.sceneUpdated(this.scene);
+      this._initialized = true;
     } catch (err) {
       logError(err as Error);
     }
+  }
+
+  private refreshDocuments() {
+    if (!this.active || !this.scene) return;
+    // Clean out old sprites
+    const entries = Object.entries(this.sprites);
+    entries.forEach(([uuid, sprite]) => {
+      sprite.destroy();
+      delete this.sprites[uuid];
+    });
+
+    // Add tokens and tiles
+    this.scene.tokens.forEach(doc => { this.documentAdded(doc); });
+    this.scene.tiles.forEach(doc => { this.documentAdded(doc); });
+    this.scene.drawings.forEach(doc => { this.documentAdded(doc); });
+    this.scene.notes.forEach(doc => { this.documentAdded(doc); });
   }
 
   private createTileTokenTexture(doc: TileDocument | TokenDocument): PIXI.Texture | undefined {
