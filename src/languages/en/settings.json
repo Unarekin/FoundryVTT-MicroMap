@@ -5,26 +5,6 @@
         "HINT": "When this option is enabled, items drawn on the minimap won't be antialias when they're scaled, causing them to appear sharper.",
         "NAME": "Disable AntiAliasing"
       },
-      "RESETOVERRIDES": {
-        "NAME": "Reset to Default",
-        "HINT": "Reset this scene's override settings to the global defaults."
-      },
-      "SHOWWEATHER": {
-        "NAME": "Show Weather Effects",
-        "HINT": "If enabled, will show weather effects for scene-type minimaps."
-      },
-      "SHOWDARKNESS": {
-        "NAME": "Show Darkness",
-        "HINT": "If enabled, will show general darkness level for scene-type minimaps."
-      },
-      "SHOWDRAWINGS": {
-        "NAME": "Show Drawings",
-        "HINT": "If enabled, will show drawings for scene-type minimaps."
-      },
-      "SHOWNOTES": {
-        "NAME": "Show Map Notes",
-        "HINT": "If enabled, will show map notes for scene-type minimaps."
-      },
       "BGCOLOR": {
         "HINT": "The background color to use on the minimap",
         "NAME": "Background Color"
@@ -39,12 +19,12 @@
       },
       "MARKERS": {
         "BUTTON": "Configure Map Markers",
-        "HINT": "Configure map markers",
-        "NAME": "Map Markers",
         "CLEAR": "Remove All Markers",
-        "EXPORT": "Export Map Markers",
-        "IMPORT": "Import Map Markers",
         "EDIT": "Edit Map Marker",
+        "EXPORT": "Export Map Markers",
+        "HINT": "Configure map markers",
+        "IMPORT": "Import Map Markers",
+        "NAME": "Map Markers",
         "REMOVE": "Remove Map Marker"
       },
       "MASK": {
@@ -79,6 +59,10 @@
         "TOPLEFT": "Top Left",
         "TOPRIGHT": "Top Right"
       },
+      "RESETOVERRIDES": {
+        "HINT": "Reset this scene's override settings to the global defaults.",
+        "NAME": "Reset to Default"
+      },
       "SHAPE": {
         "CIRCLE": "Circular",
         "DIAMOND": "Diamond",
@@ -90,6 +74,26 @@
       "SHOW": {
         "HINT": "Show or hide the minimap.",
         "NAME": "Toggle MiniMap"
+      },
+      "SHOWDARKNESS": {
+        "HINT": "If enabled, will show general darkness level for scene-type minimaps.",
+        "NAME": "Show Darkness"
+      },
+      "SHOWDRAWINGS": {
+        "HINT": "If enabled, will show drawings for scene-type minimaps.",
+        "NAME": "Show Drawings"
+      },
+      "SHOWGRID": {
+        "HINT": "If enabled, will show the grid for scene-type minimaps.",
+        "NAME": "Show Scene Grid"
+      },
+      "SHOWNOTES": {
+        "HINT": "If enabled, will show map notes for scene-type minimaps.",
+        "NAME": "Show Map Notes"
+      },
+      "SHOWWEATHER": {
+        "HINT": "If enabled, will show weather effects for scene-type minimaps.",
+        "NAME": "Show Weather Effects"
       },
       "UNLOCKPLAYERS": {
         "NAME": "Allow Players to Pan/Zoom MiniMap"

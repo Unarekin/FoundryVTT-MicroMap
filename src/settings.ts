@@ -30,6 +30,7 @@ declare global {
     "micro-map.showDarkness": boolean;
     "micro-map.showDrawings": boolean;
     "micro-map.showNotes": boolean;
+    "micro-map.showGrid": boolean;
   }
 }
 
@@ -228,6 +229,21 @@ Hooks.once("init", () => {
           const map = getMiniMap();
           if (!(map instanceof MiniMap)) return;
           map.showNotes = val;
+        }
+      });
+
+      game.settings.register(__MODULE_ID__, "showGrid", {
+        name: "MINIMAP.SETTINGS.SHOWGRID.NAME",
+        hint: "MINIMAP.SETTINGS.SHOWGRID.HINT",
+        config: true,
+        scope: "world",
+        type: Boolean,
+        default: true,
+        requiresReload: false,
+        onChange(val: boolean) {
+          const map = getMiniMap();
+          if (!(map instanceof MiniMap)) return;
+          map.showGrid = val;
         }
       })
 

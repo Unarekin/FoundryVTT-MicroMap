@@ -15,6 +15,7 @@ export class SceneRenderer {
   private bgImageSprite: PIXI.Sprite;
   private fgImageSprite: PIXI.Sprite;
   private darknessSprite: PIXI.Sprite;
+  private gridMesh: GridMesh;
 
   private _showWeather = true;
   public get showWeather() { return this._showWeather; }
@@ -49,6 +50,16 @@ export class SceneRenderer {
     if (this.showNotes !== val) {
       this._showNotes = val;
       if (this._initialized) this.refreshDocuments();
+    }
+  }
+
+  private _showGrid = true;
+  public get showGrid() { return this._showGrid; }
+  public set showGrid(val) {
+    if (this.showGrid !== val) {
+      this._showGrid = val;
+      this.gridMesh.renderable = val;
+      this.refreshGrid();
     }
   }
 
@@ -190,6 +201,20 @@ export class SceneRenderer {
     }
   }
 
+  private refreshGrid() {
+    if (this.gridMesh && canvas?.grid && canvas?.dimensions) {
+      this.gridMesh.initialize({
+        type: canvas.grid.type,
+        width: canvas.dimensions.width,
+        height: canvas.dimensions.height,
+        size: canvas.dimensions.size,
+        thickness: canvas.grid.thickness,
+        color: canvas.grid.color,
+        alpha: canvas.grid.alpha
+      })
+    }
+  }
+
   private sceneUpdated(delta?: DeepPartial<Scene>) {
     try {
       if (!this.scene || !this.active) return;
@@ -207,6 +232,7 @@ export class SceneRenderer {
         this._weatherHandler.scene = this.scene;
         this._weatherHandler.initializeWeather();
       }
+      this.refreshGrid();
     } catch (err) {
       logError(err as Error);
     }
@@ -679,6 +705,13 @@ export class SceneRenderer {
     this.container.addChild(this.weatherContainer);
 
     this.container.addChild(this.darknessSprite);
+
+    if (canvas?.grid && canvas?.dimensions) {
+      this.gridMesh = new GridMesh(GridShader);
+      this.container.addChild(this.gridMesh);
+      this.gridMesh.zIndex = 1000000;
+      this.refreshGrid();
+    }
 
     // Set up some hooks
     Hooks.on("updateScene", (scene: Scene, delta: DeepPartial<Scene>) => { if (this.active && scene === this.scene) this.sceneUpdated(delta); });

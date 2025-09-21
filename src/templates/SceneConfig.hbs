@@ -80,6 +80,12 @@
     </div>
 
     <div class="form-group">
+      <label for="{{idPrefix}}-showGrid">{{localize "MINIMAP.SETTINGS.SHOWGRID.NAME"}}</label>
+      <input type="checkbox" name="microMap.showGrid" id="{{idPrefix}}-showGrid" {{checked flags.showGrid}}>
+      <p class="hint">{{localize "MINIMAP.SETTINGS.SHOWGRID.HINT"}}</p>
+    </div>
+
+    <div class="form-group">
       <label>{{localize "MINIMAP.SETTINGS.POSITION.NAME"}}</label>
       <select name="microMap.position" id="{{idPrefix}}-position">
         {{selectOptions positionSelect selected=flags.position localize=true}}
