@@ -1,6 +1,6 @@
 import { MapMarkerConfig, MapMode, MapPosition, MapShape, MapView, OverlaySettings } from './types';
 import { coerceScene } from './coercion';
-import { log, logError } from 'logging';
+import { logError } from 'logging';
 import { getEffectiveFlagsForScene, getGame, localize, nineSliceScale } from 'utils';
 import { SceneRenderer } from './SceneRenderer';
 import { synchronizeView } from 'sockets';
@@ -27,6 +27,9 @@ export class MiniMap {
 
   public get showDrawings() { return this.sceneRenderer.showDrawings; }
   public set showDrawings(val) { this.sceneRenderer.showDrawings = val; }
+
+  public get showNotes() { return this.sceneRenderer.showNotes; }
+  public set showNotes(val) { this.sceneRenderer.showNotes = val; }
 
   public readonly mapMarkers: MapMarkerConfig[] = [];
 
@@ -1010,6 +1013,7 @@ export class MiniMap {
     this.sceneRenderer = new SceneRenderer(this.sceneSprite);
 
 
+
     if (!this.staticSprite.texture.valid)
       this.staticSprite.texture.baseTexture.once("loaded", () => { this.update(); })
     else
@@ -1068,7 +1072,7 @@ export class MiniMap {
       .then(game => {
         try {
           const settings = getEffectiveFlagsForScene(canvas.scene instanceof Scene ? canvas.scene : undefined);
-          log("Effective settings:", settings);
+
           this._suppressUpdate = true;
           this.visible = !!settings.show;
           this.position = settings.position;
@@ -1090,6 +1094,7 @@ export class MiniMap {
           this.showWeather = settings.showWeather;
           this.showDarkness = settings.showDarkness;
           this.showDrawings = settings.showDrawings;
+          this.showNotes = settings.showNotes;
 
           this.allowPan = game.settings.get(__MODULE_ID__, "unlockPlayers") as boolean;
           this.allowZoom = game.settings.get(__MODULE_ID__, "unlockPlayers") as boolean;
@@ -1106,8 +1111,8 @@ export class MiniMap {
 
           const overlaySettings = game.settings.get(__MODULE_ID__, "overlaySettings");
           this.setOverlayFromSettings(overlaySettings);
-          this.setMask(this.shape);
 
+          this.setMask(this.shape);
 
 
           return this.setMapMarkers(game.settings.get(__MODULE_ID__, "markers"));

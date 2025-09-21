@@ -214,6 +214,21 @@ Hooks.once("init", () => {
           if (!(map instanceof MiniMap)) return;
           map.showDrawings = val;
         }
+      });
+
+      game.settings.register(__MODULE_ID__, "showNotes", {
+        name: "MINIMAP.SETTINGS.SHOWNOTES.NAME",
+        hint: "MINIMAP.SETTINGS.SHOWNOTES.HINT",
+        config: true,
+        scope: "world",
+        type: Boolean,
+        default: true,
+        requiresReload: false,
+        onChange(val: boolean) {
+          const map = getMiniMap();
+          if (!(map instanceof MiniMap)) return;
+          map.showNotes = val;
+        }
       })
 
       game.settings.register(__MODULE_ID__, "position", {

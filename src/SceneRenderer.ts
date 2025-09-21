@@ -43,6 +43,15 @@ export class SceneRenderer {
     }
   }
 
+  private _showNotes = true;
+  public get showNotes() { return this._showNotes; }
+  public set showNotes(val) {
+    if (this.showNotes !== val) {
+      this._showNotes = val;
+      if (this._initialized) this.refreshDocuments();
+    }
+  }
+
   public readonly weatherContainer = new PIXI.Container();
 
   private _antiAliasing = true;
@@ -79,6 +88,7 @@ export class SceneRenderer {
 
   private shouldProcessDocument(doc: SceneDocument): boolean {
     if (doc instanceof DrawingDocument && !this.showDrawings) return false;
+    if (doc instanceof NoteDocument && !this.showNotes) return false;
 
     if (!this.active) return false;
     if (!(doc.parent instanceof Scene)) return false;

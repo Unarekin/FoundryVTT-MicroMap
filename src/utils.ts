@@ -96,6 +96,7 @@ export function defaultSceneFlags(): SceneFlags {
     showWeather: game?.settings?.get(__MODULE_ID__, "showWeather") ?? true,
     showDarkness: game?.settings?.get(__MODULE_ID__, "showDarkness") ?? true,
     showDrawings: game?.settings?.get(__MODULE_ID__, "showDrawings") ?? true,
+    showNotes: game?.settings?.get(__MODULE_ID__, "showNotes") ?? true,
     overlaySettings: game?.settings?.get(__MODULE_ID__, "overlaySettings") ?? {
       visible: false,
       file: "",
