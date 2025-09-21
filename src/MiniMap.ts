@@ -1,7 +1,7 @@
 import { MapMarkerConfig, MapMode, MapPosition, MapShape, MapView, OverlaySettings } from './types';
 import { coerceScene } from './coercion';
 import { logError } from 'logging';
-import { getGame, localize, nineSliceScale } from 'utils';
+import { getEffectiveFlagsForScene, getGame, localize, nineSliceScale } from 'utils';
 import { SceneRenderer } from './SceneRenderer';
 import { synchronizeView } from 'sockets';
 import { LocalizedError } from 'errors';
@@ -1058,23 +1058,24 @@ export class MiniMap {
     getGame()
       .then(game => {
         try {
+          const settings = getEffectiveFlagsForScene(canvas.scene instanceof Scene ? canvas.scene : undefined);
           this._suppressUpdate = true;
-          this.visible = !!game.settings.get(__MODULE_ID__, "show");
-          this.position = game.settings.get(__MODULE_ID__, "position") as MapPosition;
-          this.shape = game.settings.get(__MODULE_ID__, "shape") as MapShape;
+          this.visible = !!settings.show;
+          this.position = settings.position;
+          this.shape = settings.shape;
           // this.padding = game.settings.get(__MODULE_ID__, "padding");
-          this.padding.x = game.settings.get(__MODULE_ID__, "padX") ?? 0;
-          this.padding.y = game.settings.get(__MODULE_ID__, "padY") ?? 0;
+          this.padding.x = settings.padX;
+          this.padding.y = settings.padY;
 
-          this.mask = game.settings.get(__MODULE_ID__, "mask");
-          this.bgColor = game.settings.get(__MODULE_ID__, "bgColor");
+          this.mask = settings.mask;
+          this.bgColor = settings.bgColor;
 
-          this.height = game.settings.get(__MODULE_ID__, "height");
-          this.width = game.settings.get(__MODULE_ID__, "width");
+          this.height = settings.height;
+          this.width = settings.width;
 
-          this.mode = game.settings.get(__MODULE_ID__, "mode") as MapMode;
-          this.image = game.settings.get(__MODULE_ID__, "image");
-          this.scene = game.settings.get(__MODULE_ID__, "scene");
+          this.mode = settings.mode;
+          this.image = settings.image ?? "";
+          this.scene = settings.scene;
 
           this.allowPan = game.settings.get(__MODULE_ID__, "unlockPlayers") as boolean;
           this.allowZoom = game.settings.get(__MODULE_ID__, "unlockPlayers") as boolean;

@@ -114,10 +114,15 @@ export function getSceneFlags(scene: Scene): SceneFlags {
   return flags;
 }
 
-export function getEffectiveFlagsForScene(scene: Scene): SceneFlags {
+export function getEffectiveFlagsForScene(scene?: Scene): SceneFlags {
   const defaultFlags = defaultSceneFlags();
-  const sceneFlags = getSceneFlags(scene);
-  return sceneFlags.override ? sceneFlags : defaultFlags;
+  if (scene) {
+    const sceneFlags = getSceneFlags(scene);
+    return sceneFlags.override ? sceneFlags : defaultFlags;
+  } else {
+    return defaultFlags;
+  }
+
 }
 
 

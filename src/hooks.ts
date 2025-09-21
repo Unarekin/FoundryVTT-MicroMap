@@ -82,6 +82,7 @@ function updateMap(scene: Scene) {
   map.shape = settings.shape;
   map.mask = settings.mask;
   map.visible = settings.show;
+  map.position = settings.position;
   map.setOverlayFromSettings(settings.overlaySettings);
 }
 

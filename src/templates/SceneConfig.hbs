@@ -1,4 +1,4 @@
-<div class="tab{{#if tab.active}} active{{/if}}" data-group="{{#if microMap.isV1}}main{{else}}sheet{{/if}}" data-tab="micromap" data-application-part="micromap">
+<div class="tab{{#if tab.active}} active{{/if}}" data-group="{{#if microMap.isV1}}main{{else}}sheet{{/if}}" data-tab="micromap" data-application-part="micromap" style="overflow-y:auto;overflow-x:hidden">
   {{#with microMap}}
     <div class="form-group">
       <label for="{{idPrefix}}-override">{{localize "MINIMAP.SCENECONFIG.OVERRIDE.NAME"}}</label>
@@ -41,6 +41,14 @@
         type="imagevideo"
         value="{{flags.image}}"
       ></file-picker>
+    </div>
+
+    <div class="form-group">
+      <label>{{localize "MINIMAP.SETTINGS.POSITION.NAME"}}</label>
+      <select name="microMap.position" id="{{idPrefix}}-position">
+        {{selectOptions positionSelect selected=flags.position localize=true}}
+      </select>
+      <p class="hint">{{localize "MINIMAP.SETTINGS.POSITION.HINT"}}</p>
     </div>
 
     <div class="form-group slim">
