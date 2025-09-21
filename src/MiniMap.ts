@@ -408,18 +408,21 @@ export class MiniMap {
       sprite
     };
 
-    if (!marker.showLabel) {
-      const label = sprite.children?.find(child => child instanceof PreciseText);
-      if (label) label.renderable = true;
+    const label = sprite.children?.find(child => child instanceof PreciseText);
+    if (label) {
+      label.style.fontSize = marker.fontSize * (1 / this.#mapContainer.scale.x);
+      if (!marker.showLabel) label.renderable = true;
     }
   }
   protected mapMarkerLeave(e: PIXI.FederatedPointerEvent, marker: MapMarkerConfig, sprite: PIXI.DisplayObject) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     this.removeSpriteFilters(sprite, (PIXI.filters as any).OutlineFilter as typeof PIXI.Filter);
     this.mapMarkerUnderMouse = undefined;
-    if (!marker.showLabel) {
-      const label = sprite.children?.find(child => child instanceof PreciseText);
-      if (label) label.renderable = false;
+
+    const label = sprite.children?.find(child => child instanceof PreciseText);
+    if (label) {
+      label.style.fontSize = marker.fontSize ?? 32;
+      if (!marker.showLabel) label.renderable = false;
     }
   }
 
