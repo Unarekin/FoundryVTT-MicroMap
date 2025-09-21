@@ -23,6 +23,16 @@ export class SceneRenderer {
       this.weatherContainer.renderable = val;
     }
   }
+
+  private _showDarkness = true;
+  public get showDarkness() { return this._showDarkness; }
+  public set showDarkness(val) {
+    if (this.showDarkness !== val) {
+      this._showDarkness = val;
+      this.darknessSprite.renderable = val;
+    }
+  }
+
   public readonly weatherContainer = new PIXI.Container();
 
   private _antiAliasing = true;
@@ -162,8 +172,11 @@ export class SceneRenderer {
       if (typeof delta?.background?.src !== "undefined") this.drawBackgroundImage();
       if (typeof delta?.foreground !== "undefined") this.drawForegroundImage();
 
-      if (typeof delta?.environment?.darknessLevel !== "undefined")
+      if (typeof delta?.environment?.darknessLevel !== "undefined") {
         this.darknessSprite.alpha = delta.environment.darknessLevel * .8;
+        this.darknessSprite.width = this.scene.width ?? 0;
+        this.darknessSprite.height = this.scene.height ?? 0;
+      }
 
       if (typeof delta?.weather !== "undefined") {
         this._weatherHandler.scene = this.scene;

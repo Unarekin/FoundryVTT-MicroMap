@@ -74,6 +74,7 @@ export interface SceneFlags {
   mask: string;
   overlaySettings: OverlaySettings;
   showWeather: boolean;
+  showDarkness: boolean;
 }
 
 export const MESSAGE_TYPES = ["sync"] as const;

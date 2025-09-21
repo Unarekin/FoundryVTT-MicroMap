@@ -50,6 +50,12 @@
     </div>
 
     <div class="form-group">
+      <label for="{{idPrefix}}-showDarkness">{{localize "MINIMAP.SETTINGS.SHOWDARKNESS.NAME"}}</label>
+      <input type="checkbox" name="microMap.showDarkness" id="{{idPrefix}}-showDarkness" {{checked flags.showDarkness}}>
+      <p class="hint">{{localize "MINIMAP.SETTINGS.SHOWDARKNESS.HINT"}}</p>
+    </div>
+
+    <div class="form-group">
       <label>{{localize "MINIMAP.SETTINGS.POSITION.NAME"}}</label>
       <select name="microMap.position" id="{{idPrefix}}-position">
         {{selectOptions positionSelect selected=flags.position localize=true}}

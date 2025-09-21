@@ -184,7 +184,22 @@ Hooks.once("init", () => {
           if (!(map instanceof MiniMap)) return;
           map.showWeather = val;
         }
-      })
+      });
+
+      game.settings.register(__MODULE_ID__, "showDarkness", {
+        name: "MINIMAP.SETTINGS.SHOWDARKNESS.NAME",
+        hint: "MINIMAP.SETTINGS.SHOWDARKNESS.HINT",
+        config: true,
+        scope: "world",
+        type: Boolean,
+        default: true,
+        requiresReload: false,
+        onChange(val: boolean) {
+          const map = getMiniMap();
+          if (!(map instanceof MiniMap)) return;
+          map.showDarkness = val;
+        }
+      });
 
       game.settings.register(__MODULE_ID__, "position", {
         name: "MINIMAP.SETTINGS.POSITION.NAME",

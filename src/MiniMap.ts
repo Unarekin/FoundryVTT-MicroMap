@@ -1,6 +1,6 @@
 import { MapMarkerConfig, MapMode, MapPosition, MapShape, MapView, OverlaySettings } from './types';
 import { coerceScene } from './coercion';
-import { logError } from 'logging';
+import { log, logError } from 'logging';
 import { getEffectiveFlagsForScene, getGame, localize, nineSliceScale } from 'utils';
 import { SceneRenderer } from './SceneRenderer';
 import { synchronizeView } from 'sockets';
@@ -21,6 +21,9 @@ export class MiniMap {
 
   public get showWeather() { return this.sceneRenderer.showWeather; }
   public set showWeather(val) { this.sceneRenderer.showWeather = val; }
+
+  public get showDarkness() { return this.sceneRenderer.showDarkness; }
+  public set showDarkness(val) { this.sceneRenderer.showDarkness = val; }
 
   public readonly mapMarkers: MapMarkerConfig[] = [];
 
@@ -1062,6 +1065,7 @@ export class MiniMap {
       .then(game => {
         try {
           const settings = getEffectiveFlagsForScene(canvas.scene instanceof Scene ? canvas.scene : undefined);
+          log("Effective settings:", settings);
           this._suppressUpdate = true;
           this.visible = !!settings.show;
           this.position = settings.position;
@@ -1081,6 +1085,7 @@ export class MiniMap {
           this.scene = settings.scene;
 
           this.showWeather = settings.showWeather;
+          this.showDarkness = settings.showDarkness;
 
           this.allowPan = game.settings.get(__MODULE_ID__, "unlockPlayers") as boolean;
           this.allowZoom = game.settings.get(__MODULE_ID__, "unlockPlayers") as boolean;
