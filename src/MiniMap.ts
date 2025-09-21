@@ -573,9 +573,8 @@ export class MiniMap {
     sprite.tint = marker.tint;
     this.markerContainer.addChild(container);
 
-    if (this.mode === "scene")
-      sprite.width = sprite.height = this.scene?.dimensions.size ?? 100;
-    else sprite.width = sprite.height = 100;
+    sprite.width = marker.width ?? 100;
+    sprite.height = marker.height ?? 100;
 
     sprite.name = `Map Marker ${marker.id}`;
     // sprite.texture.baseTexture.setStyle(0, 0);
