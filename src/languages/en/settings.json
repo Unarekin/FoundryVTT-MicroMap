@@ -5,6 +5,10 @@
         "HINT": "When this option is enabled, items drawn on the minimap won't be antialias when they're scaled, causing them to appear sharper.",
         "NAME": "Disable AntiAliasing"
       },
+      "RESETOVERRIDES": {
+        "NAME": "Reset to Default",
+        "HINT": "Reset this scene's override settings to the global defaults."
+      },
       "SHOWWEATHER": {
         "NAME": "Show Weather Effects",
         "HINT": "If enabled, will show weather effects for scene-type minimaps."

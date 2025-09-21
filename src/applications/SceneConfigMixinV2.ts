@@ -1,4 +1,4 @@
-import { getSceneFlags } from "utils";
+import { getSceneFlags, defaultSceneFlags } from "utils";
 import { sceneConfigSelectOptions } from "./functions";
 import { MapMode, MapShape, OverlaySettings, SceneFlags } from "types";
 import { OverlaySettingsApplication } from "./OverlaySettingsApplication";
@@ -8,10 +8,24 @@ export function SceneConfigV2Mixin(Base: typeof foundry.applications.sheets.Scen
   class SceneConfigV2 extends Base {
     #overlaySettings: OverlaySettings | undefined = undefined;
 
+    #overrideFlags: SceneFlags | undefined = undefined;
+
     public static DEFAULT_OPTIONS = {
       actions: {
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        overlaySettings: SceneConfigV2.ConfigureOverlay
+        overlaySettings: SceneConfigV2.ConfigureOverlay,
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        resetOverrides: SceneConfigV2.ResetOverrides
+      }
+    }
+
+    static async ResetOverrides(this: SceneConfigV2) {
+      try {
+        const flags = defaultSceneFlags();
+        this.#overrideFlags = foundry.utils.deepClone(flags);
+        await this.render();
+      } catch (err) {
+        logError(err as Error);
       }
     }
 
@@ -52,7 +66,7 @@ export function SceneConfigV2Mixin(Base: typeof foundry.applications.sheets.Scen
     async _prepareContext(options: foundry.applications.api.DocumentSheetV2.RenderOptions) {
       const context = await super._prepareContext(options);
 
-      const flags = getSceneFlags(this.document);
+      const flags = this.#overrideFlags ?? getSceneFlags(this.document);
 
       (context as unknown as Record<string, unknown>).microMap = {
         isV1: false,

@@ -1,4 +1,4 @@
-import { getSceneFlags, localize } from "utils";
+import { getSceneFlags, defaultSceneFlags, localize } from "utils";
 import { sceneConfigSelectOptions } from "./functions";
 import { MapMode, MapShape, OverlaySettings, SceneFlags } from "types";
 import { logError } from "logging";
@@ -8,6 +8,7 @@ export function SceneConfigV1Mixin(Base: typeof SceneConfig) {
   return class SceneConfigV1 extends Base {
 
     #overlaySettings: OverlaySettings | undefined = undefined;
+    #overrideFlags: SceneFlags | undefined = undefined;
 
     async _renderInner(data: ReturnType<this["getData"]>): Promise<JQuery<HTMLElement>> {
       const html = await super._renderInner(data);
@@ -22,7 +23,7 @@ export function SceneConfigV1Mixin(Base: typeof SceneConfig) {
             .append(`<i class="fa-solid fa-fw fa-map"></i> ${localize("SCENE.TABS.SHEET.micromap")}`)
         );
 
-      const flags = getSceneFlags(this.document);
+      const flags = this.#overrideFlags ?? getSceneFlags(this.document);
 
       const content = await renderTemplate(`modules/${__MODULE_ID__}/templates/SceneConfig.hbs`, {
         microMap: {
@@ -56,7 +57,15 @@ export function SceneConfigV1Mixin(Base: typeof SceneConfig) {
       if (overlayButton instanceof HTMLButtonElement)
         overlayButton.addEventListener("click", () => { this.configureOverlay().catch(logError); });
 
+      const resetButton = html[0].querySelector(`[data-action="resetOverrides"]`);
+      if (resetButton instanceof HTMLButtonElement)
+        resetButton.addEventListener("click", () => { this.resetOverrides(); });
       return html;
+    }
+
+    private resetOverrides() {
+      this.#overrideFlags = foundry.utils.deepClone(defaultSceneFlags());
+      this.render();
     }
 
     private async configureOverlay() {

@@ -7,6 +7,15 @@
     </div>
 
     <div class="form-group">
+      <label>{{localize "MINIMAP.SETTINGS.RESETOVERRIDES.NAME"}}</label>
+      <button type="button" data-action="resetOverrides">
+        <i class="fa-solid fa-rotate-left"></i>
+        {{localize "MINIMAP.SETTINGS.RESETOVERRIDES.NAME"}}
+      </button>
+      <p class="hint">{{localize "MINIMAP.SETTINGS.RESETOVERRIDES.HINT"}}</p>
+    </div>
+
+    <div class="form-group">
       <label for="{{idPrefix}}-show">{{localize "MINIMAP.SETTINGS.ENABLE.NAME"}}</label>
       <input type="checkbox" name="microMap.show" id="{{idPrefix}}-show" {{checked flags.show}}>
       <p class="hint">{{localize "MINIMAP.SETTINGS.ENABLE.HINT"}}</p>
@@ -14,7 +23,10 @@
 
     <div class="form-group">
       <label>{{localize "MINIMAP.SETTINGS.OVERLAY.NAME"}}</label>
-      <button type="button" data-action="overlaySettings">{{localize "MINIMAP.SETTINGS.OVERLAY.BUTTON"}}</button>
+      <button type="button" data-action="overlaySettings">
+        <i class="fa-solid fa-frame"></i>
+        {{localize "MINIMAP.SETTINGS.OVERLAY.BUTTON"}}
+      </button>
       <p class="hint">{{localize "MINIMAP.SETTINGS.OVERLAY.HINT"}}</p>
     </div>
 
