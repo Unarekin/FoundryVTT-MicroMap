@@ -25,6 +25,12 @@
       },
       "ICON": {
         "NAME": "Icon"
+      },
+      "LABELALIGN": {
+        "NAME": "Label Alignment",
+        "HINT": "",
+        "TOP": "Top",
+        "BOTTOM": "Bottom"
       }
     }
   }

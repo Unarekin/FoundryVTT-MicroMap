@@ -384,7 +384,7 @@ export class MiniMap {
 
   private mapMarkerUnderMouse: { config: MapMarkerConfig, sprite: PIXI.DisplayObject } | undefined = undefined;
 
-  protected mapMarkerEnter(e: PIXI.FederatedPointerEvent, marker: MapMarkerConfig, sprite: PIXI.Sprite) {
+  protected mapMarkerEnter(e: PIXI.FederatedPointerEvent, marker: MapMarkerConfig, sprite: PIXI.DisplayObject) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     this.removeSpriteFilters(sprite, (PIXI.filters as any).OutlineFilter as typeof PIXI.Filter);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
@@ -395,30 +395,98 @@ export class MiniMap {
       config: marker,
       sprite
     };
+
+    if (!marker.showLabel) {
+      const label = sprite.children?.find(child => child instanceof PreciseText);
+      if (label) label.renderable = true;
+    }
   }
-  protected mapMarkerLeave(e: PIXI.FederatedPointerEvent, marker: MapMarkerConfig, sprite: PIXI.Sprite) {
+  protected mapMarkerLeave(e: PIXI.FederatedPointerEvent, marker: MapMarkerConfig, sprite: PIXI.DisplayObject) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     this.removeSpriteFilters(sprite, (PIXI.filters as any).OutlineFilter as typeof PIXI.Filter);
     this.mapMarkerUnderMouse = undefined;
+    if (!marker.showLabel) {
+      const label = sprite.children?.find(child => child instanceof PreciseText);
+      if (label) label.renderable = false;
+    }
   }
 
 
-  protected mapMarkerMouseDown(e: PIXI.FederatedPointerEvent, marker: MapMarkerConfig, sprite: PIXI.Sprite) {
-    // Start drag
-    this.mapMarkerDragStart(e, marker, sprite);
+
+
+
+
+  #draggingMarker = "";
+
+  protected mapMarkerMouseDown(e: PIXI.FederatedPointerEvent, marker: MapMarkerConfig, sprite: PIXI.DisplayObject) {
+    getGame()
+      .then(game => {
+        if (game.user.isGM) {
+          // Start drag
+          this.mapMarkerDragStart(e, marker, sprite);
+        }
+      }).catch(logError)
+
   }
 
-  protected mapMarkerMouseUp(e: PIXI.FederatedPointerEvent, marker: MapMarkerConfig, sprite: PIXI.Sprite) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  protected mapMarkerMouseUp(e: PIXI.FederatedPointerEvent, marker: MapMarkerConfig, sprite: PIXI.DisplayObject) {
     // End drag
-    this.mapMarkerDrop(e, marker, sprite);
+    this.mapMarkerDrop(e);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
-  protected mapMarkerDragStart(e: PIXI.FederatedPointerEvent, marker: MapMarkerConfig, sprite: PIXI.Sprite) { }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
-  protected mapMarkerDrag(e: PIXI.FederatedPointerEvent, marker: MapMarkerConfig, sprite: PIXI.Sprite) { }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
-  protected mapMarkerDrop(e: PIXI.FederatedPointerEvent, marker: MapMarkerConfig, sprite: PIXI.Sprite) { }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  protected mapMarkerDragStart(e: PIXI.FederatedPointerEvent, marker: MapMarkerConfig, sprite: PIXI.DisplayObject) {
+    getGame()
+      .then(game => {
+        if (game.user.isGM) {
+          if (!canvas?.app?.stage) return;
+          this.#draggingMarker = marker.id;
+          if (this.#dragListener) canvas.app.stage.off("pointermove", this.#dragListener);
+          this.#dragListener = this.mapMarkerDrag.bind(this);
+          canvas.app.stage.on("pointermove", this.#dragListener);
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }).catch(logError);
+  }
+
+  protected mapMarkerDrag(e: PIXI.FederatedPointerEvent) {
+    getGame()
+      .then(game => {
+        if (game.user.isGM) {
+          if (this.#draggingMarker) {
+            const marker = this.mapMarkers.find(item => item.id === this.#draggingMarker);
+            if (marker) {
+              e.stopPropagation();
+              e.preventDefault();
+              const global = new PIXI.Point(e.globalX, e.globalY);
+              const local = this.markerContainer.toLocal(global);
+              marker.x = Math.round(local.x)
+              marker.y = Math.round(local.y);
+              this.setMapMarkers(foundry.utils.deepClone(this.mapMarkers));
+            }
+          }
+
+        }
+      }).catch(logError);
+  }
+
+
+  protected mapMarkerDrop(e: PIXI.FederatedPointerEvent) {
+    this.#draggingMarker = "";
+    if (this.#dragListener) {
+      if (canvas?.app?.stage) canvas.app.stage.off("pointermove", this.#dragListener);
+      this.#dragListener = null;
+      e.preventDefault();
+      e.stopPropagation();
+
+      getGame()
+        .then(game => game.settings.set(__MODULE_ID__, "markers", foundry.utils.deepClone(this.mapMarkers)))
+        .catch(logError)
+    }
+  }
 
   public refreshMapMarkers() {
     getGame()
@@ -482,22 +550,24 @@ export class MiniMap {
   public addMapMarker(marker: MapMarkerConfig) {
     this.mapMarkers.push(marker);
 
+    const container = new PIXI.Container();
     const sprite = PIXI.Sprite.from(marker.icon);
 
     sprite.tint = marker.tint;
-    this.markerContainer.addChild(sprite);
+    this.markerContainer.addChild(container);
 
     if (this.mode === "scene")
       sprite.width = sprite.height = this.scene?.dimensions.size ?? 100;
     else sprite.width = sprite.height = 100;
 
-    sprite.anchor.x = 0.5;
-    sprite.anchor.y = 1;
-    sprite.x = marker.x;
-    sprite.y = marker.y;
     sprite.name = `Map Marker ${marker.id}`;
     // sprite.texture.baseTexture.setStyle(0, 0);
     sprite.interactive = true;
+
+    container.addChild(sprite);
+    container.x = marker.x - (container.width / 2);
+    container.y = marker.y - (container.height);
+
 
     if (marker.dropShadow) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
@@ -506,10 +576,44 @@ export class MiniMap {
       else sprite.filters = [shadow];
     }
 
-    sprite.addEventListener("pointerenter", e => { this.mapMarkerEnter(e, marker, sprite); });
-    sprite.addEventListener("pointerleave", e => { this.mapMarkerLeave(e, marker, sprite); });
-    sprite.addEventListener("pointerdown", e => { this.mapMarkerMouseDown(e, marker, sprite); });
-    sprite.addEventListener("pointerup", e => { this.mapMarkerMouseUp(e, marker, sprite); });
+    const text = new PreciseText(marker.label ?? "");
+    const textStyle = PreciseText.getTextStyle({
+      fontFamily: marker.fontFamily ?? CONFIG.defaultFontFamily,
+      fontSize: marker.fontSize ?? 32,
+      fill: marker.fontColor ?? "#FFFFFF",
+      strokeThickness: 2,
+      dropShadowBlur: marker.dropShadow ? 2 : 0,
+      align: "center",
+      wordWrap: true,
+      wordWrapWidth: sprite.width,
+      padding: 8
+    });
+    // // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+    // text.filters = [new (PIXI.filters as any).OutlineFilter() as PIXI.Filter];
+    text.style = textStyle;
+    text.anchor.x = 0.5;
+
+    container.addChild(text);
+
+    text.x = sprite.width / 2;
+
+    switch (marker.labelAlign) {
+      case "top":
+        text.y = 0;
+        text.anchor.y = 1;
+        break;
+      case "bottom":
+        text.y = sprite.height;
+        text.anchor.y = 0;
+        break;
+    }
+
+    text.renderable = !!marker.label && marker.showLabel;
+
+    sprite.addEventListener("pointerenter", e => { this.mapMarkerEnter(e, marker, container); });
+    sprite.addEventListener("pointerleave", e => { this.mapMarkerLeave(e, marker, container); });
+    sprite.addEventListener("pointerdown", e => { this.mapMarkerMouseDown(e, marker, container); });
+    sprite.addEventListener("pointerup", e => { this.mapMarkerMouseUp(e, marker, container); });
   }
 
   protected async createMapMarker(x: number, y: number) {
@@ -908,8 +1012,20 @@ export class MiniMap {
       if (e.button === 0) this.onDragStart(e);
       else if (e.button === 2) this.onRightClick(e);
     });
-    this.container.addEventListener("pointerup", e => { this.onDragEnd(e); });
-    this.container.addEventListener("pointerupoutside", e => { this.onDragEnd(e); });
+    this.container.addEventListener("pointerup", e => {
+      if (this.#draggingMarker) {
+        this.mapMarkerDrop(e);
+      } else {
+        this.onDragEnd(e);
+      }
+    });
+    this.container.addEventListener("pointerupoutside", e => {
+      if (this.#draggingMarker) {
+        this.mapMarkerDrop(e);
+      } else {
+        this.onDragEnd(e);
+      }
+    });
     // this.container.addEventListener("wheel", e => { this.onWheel(e); })
     const board = document.getElementById("board");
     if (board instanceof HTMLElement) board.addEventListener("wheel", e => { this.onWheel(e); }, true)

@@ -52,7 +52,6 @@ export class MapMarkerApplication extends foundry.applications.api.HandlebarsApp
     }
   }
 
-
   public static OnSubmit(this: MapMarkerApplication, event: SubmitEvent | Event, form: HTMLFormElement, formData: foundry.applications.ux.FormDataExtended) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
     const data = foundry.utils.expandObject((formData as any).object);
@@ -71,6 +70,12 @@ export class MapMarkerApplication extends foundry.applications.api.HandlebarsApp
     context.marker = this.#marker;
 
     context.idPrefix = context.marker.id;
+    context.fontSelect = Object.fromEntries(FontConfig.getAvailableFonts().sort((a, b) => a.localeCompare(b)).map(font => [font, font]));
+
+    context.labelAlignSelect = {
+      top: "MINIMAP.MARKERS.LABELALIGN.TOP",
+      bottom: "MINIMAP.MARKERS.LABELALIGN.BOTTOM"
+    }
 
     context.buttons = [
       { type: "button", icon: "fa-solid fa-times", label: "Cancel", action: "cancel" },
@@ -80,11 +85,18 @@ export class MapMarkerApplication extends foundry.applications.api.HandlebarsApp
     return context;
   }
 
-  async _onSubmitForm(formConfig: foundry.applications.api.ApplicationV2.FormConfiguration, event: Event | SubmitEvent) {
+  protected async _onRender(context: MapMarkerRenderContext, options: foundry.applications.api.ApplicationV2.RenderOptions): Promise<void> {
+    await super._onRender(context, options);
 
-
-
-    return super._onSubmitForm(formConfig, event);
+    // Set up font drop-down
+    const fontSelectors = Array.from(this.element.querySelectorAll(`[data-font-select]`)).filter(elem => elem instanceof HTMLSelectElement);
+    for (const select of fontSelectors) {
+      for (const option of select.options) {
+        option.style.fontFamily = option.value;
+      }
+      select.style.fontFamily = select.value;
+      select.addEventListener("change", () => { select.style.fontFamily = select.value; });
+    }
   }
 
   protected _onClose(options: foundry.applications.api.ApplicationV2.RenderOptions): void {
@@ -131,7 +143,11 @@ export class MapMarkerApplication extends foundry.applications.api.HandlebarsApp
       y: 0,
       width: 100,
       height: 100,
-      dropShadow: true
+      dropShadow: true,
+      labelAlign: "bottom",
+      fontFamily: CONFIG.defaultFontFamily,
+      fontSize: 32,
+      fontColor: "#FFFFFF"
     };
     if (marker) {
       foundry.utils.mergeObject(this.#marker, marker);

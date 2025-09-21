@@ -91,6 +91,9 @@ export interface SyncSocketMessage extends SocketMessage {
   view: MapView;
 }
 
+export const LabelAlignments = ["top", "bottom"] as const;
+export type LabelAlignment = typeof LabelAlignments[number];
+
 export interface MapMarkerConfig {
   id: string;
   label: string;
@@ -102,4 +105,8 @@ export interface MapMarkerConfig {
   width: number;
   height: number;
   dropShadow: boolean;
+  fontFamily: string;
+  fontSize: number;
+  labelAlign: LabelAlignment;
+  fontColor: string;
 }

@@ -13,6 +13,8 @@ export interface OverlaySettingsRenderContext extends foundry.applications.api.A
 export interface MapMarkerRenderContext extends foundry.applications.api.ApplicationV2.RenderContext {
   marker: MapMarkerConfig;
   idPrefix: string;
+  fontSelect: Record<string, string>;
+  labelAlignSelect: Record<string, string>;
   buttons: foundry.applications.api.ApplicationV2.FormFooterButton[];
 }
 

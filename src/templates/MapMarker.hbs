@@ -1,29 +1,5 @@
 <section data-role="map-marker">
   <input type="hidden" name="id" id="{{idPrefix}}-id" value="{{marker.id}}" />
-  <div class="form-group">
-    <label for="{{idPrefix}}-label">{{localize "SIMPLE.AttributeLabel"}}</label>
-    <input
-      type="text"
-      name="label"
-      placeholder="{{localize 'SIMPLE.AttributeLabel'}}"
-      id="{{idPrefix}}-label"
-      value="{{marker.label}}"
-    />
-    <p class="hint"></p>
-  </div>
-
-  <div class="form-group">
-    <label for="{{idPrefix}}-showLabel">{{localize
-        "MINIMAP.MARKERS.SHOWLABEL.NAME"
-      }}</label>
-    <input
-      type="checkbox"
-      name="showLabel"
-      id="{{idPrefix}}-showLabel"
-      {{checked marker.showLabel}}
-    />
-    <p class="hint"></p>
-  </div>
 
   <div class="form-group slim">
     <label>{{localize "TOKEN.Dimensions"}}</label>
@@ -47,7 +23,7 @@
         step="1"
       />
     </div>
-    <p class="hint"></p>
+
   </div>
 
   <div class="form-group slim">
@@ -72,42 +48,125 @@
         value="{{marker.y}}"
       />
     </div>
-    <p class="hint"></p>
+
   </div>
 
-  <div class="form-group">
-    <label for="{{idPrefix}}-icon">{{localize "NOTE.SECTIONS.ICON"}}</label>
-    <file-picker
-      type="image"
-      name="icon"
-      id="{{idPrefix}}-icon"
-      value="{{marker.icon}}"
-    ></file-picker>
-    <p class="hint"></p>
-  </div>
+  <fieldset>
+    <legend>{{localize "MINIMAP.MARKERS.LABEL.NAME"}}</legend>
 
-  <div class="form-group">
-    <label for="{{idPrefix}}-tint">{{localize
-        "TOKEN.FIELDS.texture.tint.label"
-      }}</label>
-    <color-picker
-      name="tint"
-      id="{{idPrefix}}-tint"
-      value="{{marker.tint}}"
-    ></color-picker>
-    <p class="hint"></p>
-  </div>
+    <div class="form-group">
+      <label for="{{idPrefix}}-label">{{localize
+          "MINIMAP.MARKERS.LABEL.NAME"
+        }}</label>
+      <input
+        type="text"
+        name="label"
+        placeholder="{{localize 'MINIMAP.MARKERS.LABEL.NAME'}}"
+        id="{{idPrefix}}-label"
+        value="{{marker.label}}"
+      />
 
-  <div class="form-group">
-    <label for="{{idPrefix}}-dropShadow">{{localize
-        "MINIMAP.MARKERS.DROPSHADOW.NAME"
-      }}</label>
-    <input
-      type="checkbox"
-      name="dropShadow"
-      id="{{idPrefix}}-dropShadow"
-      {{checked marker.dropShadow}}
-    />
-    <p class="hint"></p>
-  </div>
+    </div>
+
+    <div class="form-group">
+      <label for="{{idPrefix}}-showLabel">{{localize
+          "MINIMAP.MARKERS.SHOWLABEL.NAME"
+        }}</label>
+      <input
+        type="checkbox"
+        name="showLabel"
+        id="{{idPrefix}}-showLabel"
+        {{checked marker.showLabel}}
+      />
+    </div>
+
+    <div class="form-group">
+      <label for="{{idPrefix}}-labelAlign">{{localize
+          "MINIMAP.MARKERS.LABELALIGN.NAME"
+        }}</label>
+      <select name="labelAlign" id="{{idPrefix}}-labelAlign">
+        {{selectOptions
+          labelAlignSelect
+          selected=marker.labelAlign
+          localize=true
+        }}
+      </select>
+
+    </div>
+
+    <div class="form-group">
+      <label for="{{idPrefix}}-fontFamily">{{localize
+          "DRAWING.FontFamily"
+        }}</label>
+      <select name="fontFamily" id="{{idPrefix}}-fontFamily" data-font-select>
+        {{selectOptions fontSelect selected=marker.fontFamily}}
+      </select>
+
+    </div>
+
+    <div class="form-group">
+      <label for="{{idPrefix}}-fontSize">{{localize "DRAWING.FontSize"}}</label>
+      <input
+        type="number"
+        name="fontSize"
+        id="fontSize"
+        min="4"
+        step="1"
+        value="{{marker.fontSize}}"
+      />
+
+    </div>
+
+    <div class="form-group">
+      <label for="{{idPrefix}}-fontColor">{{localize
+          "DRAWING.TextColor"
+        }}</label>
+      <color-picker
+        id="{{idPrefix}}-fontColor"
+        name="fontColor"
+        value="{{marker.fontColor}}"
+      ></color-picker>
+
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>{{localize "NOTE.SECTIONS.ICON"}}</legend>
+    <div class="form-group">
+      <label for="{{idPrefix}}-icon">{{localize "NOTE.SECTIONS.ICON"}}</label>
+      <file-picker
+        type="image"
+        name="icon"
+        id="{{idPrefix}}-icon"
+        value="{{marker.icon}}"
+      ></file-picker>
+
+    </div>
+
+    <div class="form-group">
+      <label for="{{idPrefix}}-tint">{{localize
+          "TOKEN.FIELDS.texture.tint.label"
+        }}</label>
+      <color-picker
+        name="tint"
+        id="{{idPrefix}}-tint"
+        value="{{marker.tint}}"
+      ></color-picker>
+
+    </div>
+
+    <div class="form-group">
+      <label for="{{idPrefix}}-dropShadow">{{localize
+          "MINIMAP.MARKERS.DROPSHADOW.NAME"
+        }}</label>
+      <input
+        type="checkbox"
+        name="dropShadow"
+        id="{{idPrefix}}-dropShadow"
+        {{checked marker.dropShadow}}
+      />
+
+    </div>
+  </fieldset>
+
 </section>
