@@ -453,7 +453,7 @@ export class SceneRenderer {
       const stroke = Math.max(Math.round((fontSize ?? 0) / 32), 2);
       const textStyle = PreciseText.getTextStyle({
         fontFamily: fontFamily ?? CONFIG.defaultFontFamily,
-        fontSize,
+        fontSize: (fontSize ?? 32) * (1 / sprite.scale.x),
         fill: textColor,
         strokeThickness: stroke,
         dropShadowBlur: Math.max(Math.round((fontSize ?? 0) / 16), 2),
@@ -466,6 +466,7 @@ export class SceneRenderer {
       text.anchor.x = text.anchor.y = 0.5;
 
       sprite.addChild(text);
+
     } else {
       const text = sprite.children.find(item => item instanceof PreciseText);
       if (text) text.destroy();
