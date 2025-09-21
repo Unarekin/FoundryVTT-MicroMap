@@ -2,7 +2,7 @@ import { getGame, getMiniMap, localize } from "./utils";
 import { log, logError } from "./logging";
 import { MiniMap } from "MiniMap";
 import { MapPosition, MapShape, OverlaySettings, MapMode, MapView, MapMarkerConfig } from './types';
-import { OverlaySettingsApplication } from "./applications";
+import { MapMarkerSettingsApplication, OverlaySettingsApplication } from "./applications";
 import { synchronizeView } from "sockets";
 
 declare global {
@@ -350,17 +350,25 @@ Hooks.once("init", () => {
         default: { x: 0, y: 0, zoom: 1 }
       });
 
+      game.settings.registerMenu(__MODULE_ID__, "markersMenu", {
+        name: "MINIMAP.SETTINGS.MARKERS.NAME",
+        hint: "MINIMAP.SETTINGS.MARKERS.HINT",
+        label: "MINIMAP.SETTINGS.MARKERS.BUTTON",
+        restricted: true,
+        icon: "fa-solid fa-location-dot",
+        type: MapMarkerSettingsApplication
+      });
+
       game.settings.register(__MODULE_ID__, "markers", {
         scope: "world",
         config: false,
         type: Array,
         default: [],
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         onChange(markers: MapMarkerConfig[]) {
           const map = getMiniMap();
           if (!(map instanceof MiniMap)) return;
-          for (const marker of markers)
-            map.addMapMarker(marker);
-
+          map.refreshMapMarkers();
         }
       })
 

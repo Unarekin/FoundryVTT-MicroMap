@@ -1,23 +1,38 @@
 {
   "MINIMAP": {
     "SETTINGS": {
+      "ANTIALIASING": {
+        "HINT": "When this option is enabled, items drawn on the minimap won't be antialias when they're scaled, causing them to appear sharper.",
+        "NAME": "Disable AntiAliasing"
+      },
+      "BGCOLOR": {
+        "HINT": "The background color to use on the minimap",
+        "NAME": "Background Color"
+      },
+      "ENABLE": {
+        "HINT": "If enabled, will enable the minimap.",
+        "NAME": "Enable MiniMap"
+      },
+      "LOCKGMVIEW": {
+        "HINT": "If enabled, will force players' view to match the GM's.",
+        "NAME": "Lock To GM View"
+      },
+      "MARKERS": {
+        "BUTTON": "Configure Map Markers",
+        "HINT": "Configure map markers",
+        "NAME": "Map Markers",
+        "CLEAR": "Remove All Markers",
+        "EXPORT": "Export Map Markers",
+        "IMPORT": "Import Map Markers",
+        "EDIT": "Edit Map Marker",
+        "REMOVE": "Remove Map Marker"
+      },
       "MASK": {
         "HINT": "An image to use as a mask for shaping the minimap.",
         "NAME": "Image Mask"
       },
       "MODE": {
         "NAME": "MiniMap Image Mode"
-      },
-      "ANTIALIASING": {
-        "NAME": "Disable AntiAliasing",
-        "HINT": "When this option is enabled, items drawn on the minimap won't be antialias when they're scaled, causing them to appear sharper."
-      },
-      "LOCKGMVIEW": {
-        "NAME": "Lock To GM View",
-        "HINT": "If enabled, will force players' view to match the GM's."
-      },
-      "UNLOCKPLAYERS": {
-        "NAME": "Allow Players to Pan/Zoom MiniMap"
       },
       "OVERLAY": {
         "BORDERS": "Borders",
@@ -27,8 +42,8 @@
         "LEFT": "Left",
         "NAME": "MiniMap Overlay",
         "RIGHT": "Right",
-        "TOP": "Top",
-        "SHOW": "Show Overlay"
+        "SHOW": "Show Overlay",
+        "TOP": "Top"
       },
       "PADDING": {
         "HINT": "Space, in pixels, from the edge of the canvas area.",
@@ -52,17 +67,12 @@
         "NAME": "MiniMap Shape",
         "RECTANGLE": "Rectangular"
       },
-      "ENABLE": {
-        "HINT": "If enabled, will enable the minimap.",
-        "NAME": "Enable MiniMap"
-      },
       "SHOW": {
-        "NAME": "Toggle MiniMap",
-        "HINT": "Show or hide the minimap."
+        "HINT": "Show or hide the minimap.",
+        "NAME": "Toggle MiniMap"
       },
-      "BGCOLOR": {
-        "NAME": "Background Color",
-        "HINT": "The background color to use on the minimap"
+      "UNLOCKPLAYERS": {
+        "NAME": "Allow Players to Pan/Zoom MiniMap"
       }
     }
   }

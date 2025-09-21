@@ -420,6 +420,14 @@ export class MiniMap {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
   protected mapMarkerDrop(e: PIXI.FederatedPointerEvent, marker: MapMarkerConfig, sprite: PIXI.Sprite) { }
 
+  public refreshMapMarkers() {
+    getGame()
+      .then(game => {
+        const markers = game.settings.get(__MODULE_ID__, "markers");
+        this.setMapMarkers(markers);
+      })
+      .catch(logError);
+  }
 
   public async removeAllMapMarkers() {
     try {
@@ -440,8 +448,12 @@ export class MiniMap {
       const config = await MapMarkerApplication.edit(foundry.utils.deepClone(marker));
       if (!config) return;
       const index = this.mapMarkers.findIndex(item => item.id === marker.id);
-      if (index > -1) this.mapMarkers.splice(index, 1);
-      this.addMapMarker(config);
+      if (index > -1) this.mapMarkers.splice(index, 1, config);
+      this.setMapMarkers(foundry.utils.deepClone(this.mapMarkers));
+      const game = await getGame();
+      if (!game) return;
+      await game.settings.set(__MODULE_ID__, "markers", foundry.utils.deepClone(this.mapMarkers));
+      // this.addMapMarker(config);
     } catch (err) {
       logError(err as Error);
     }

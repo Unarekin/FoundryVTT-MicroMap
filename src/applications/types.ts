@@ -15,3 +15,8 @@ export interface MapMarkerRenderContext extends foundry.applications.api.Applica
   idPrefix: string;
   buttons: foundry.applications.api.ApplicationV2.FormFooterButton[];
 }
+
+export interface MapMarkerSettingsRenderContext extends foundry.applications.api.ApplicationV2.RenderContext {
+  buttons: foundry.applications.api.ApplicationV2.FormFooterButton[];
+  markers: MapMarkerConfig[];
+}

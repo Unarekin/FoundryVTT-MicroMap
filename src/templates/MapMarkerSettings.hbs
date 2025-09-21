@@ -1,0 +1,97 @@
+<section data-role="map-marker-settings">
+  <div class="form-group">
+    <label>
+      <a
+        data-action="exportMarkers"
+        data-tooltip="{{localize 'MINIMAP.SETTINGS.MARKERS.EXPORT'}}"
+      >{{localize "MINIMAP.SETTINGS.MARKERS.EXPORT"}}</a>
+    </label>
+    <div class="right-align">
+      <a
+        data-action="exportMarkers"
+        data-tooltip="{{localize 'MINIMAP.SETTINGS.MARKERS.EXPORT'}}"
+      >
+        <i class="fa-solid fa-fw fa-download"></i>
+      </a>
+    </div>
+    <p class="hint"></p>
+  </div>
+
+  <div class="form-group">
+    <label>
+      <a
+        data-action="importMarkers"
+        data-tooltip="{{localize 'MINIMAP.SETTINGS.MARKERS.IMPORT'}}"
+      >{{localize "MINIMAP.SETTINGS.MARKERS.IMPORT"}}</a>
+    </label>
+    <div class="right-align">
+      <a
+        data-action="importMarkers"
+        data-tooltip="{{localize 'MINIMAP.SETTINGS.MARKERS.IMPORT'}}"
+      >
+        <i class="fa-solid fa-fw fa-upload"></i>
+      </a>
+    </div>
+    <p class="hint"></p>
+  </div>
+
+  <div class="form-group">
+    <label>
+      <a
+        data-action="clearMarkers"
+        data-tooltip="{{localize 'MINIMAP.SETTINGS.MARKERS.CLEAR'}}"
+      >{{localize "MINIMAP.SETTINGS.MARKERS.CLEAR"}}</a>
+    </label>
+    <div class="right-align">
+      <a
+        data-action="clearMarkers"
+        data-tooltip="{{localize 'MINIMAP.SETTINGS.MARKERS.CLEAR'}}"
+      >
+        <i class="fa-solid fa-trash fa-fw"></i>
+      </a>
+    </div>
+    <p class="hint"></p>
+  </div>
+
+  <h4>{{localize "MINIMAP.SETTINGS.MARKERS.NAME"}}</h4>
+  <div data-role="markers" class="scrollable">
+    {{#each markers as |marker|}}
+      <div
+        data-role="marker"
+        data-marker="{{marker.id}}"
+        class="flexrow"
+        style="gap:5px"
+      >
+        <div class="flex1">
+          <label>
+            <a
+              data-action="editMarker"
+              data-marker="{{marker.id}}"
+              data-tooltip="{{localize 'MINIMAP.SETTINGS.MARKERS.EDIT'}}"
+            >
+              {{marker.id}}{{#if marker.label}}({{marker.label}}){{/if}}
+            </a>
+          </label>
+        </div>
+        <div class="flex0">
+          <a
+            data-action="editMarker"
+            data-marker="{{marker.id}}"
+            data-tooltip="{{localize 'MINIMAP.SETTINGS.MARKERS.EDIT'}}"
+          >
+            <i class="fa-solid fa-cogs fa-fw"></i>
+          </a>
+        </div>
+        <div class="flex0">
+          <a
+            data-action="removeMarker"
+            data-marker="{{marker.id}}"
+            data-tooltip="{{localize 'MINIMAP.SETTINGS.MARKERS.REMOVE'}}"
+          >
+            <i class="fa-solid fa-trash fa-fw"></i>
+          </a>
+        </div>
+      </div>
+    {{/each}}
+  </div>
+</section>
