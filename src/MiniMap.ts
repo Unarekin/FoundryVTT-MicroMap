@@ -900,7 +900,6 @@ export class MiniMap {
 
 
   protected onRightClick(e: PIXI.FederatedPointerEvent) {
-    e.preventDefault();
     e.stopPropagation();
     void this.showContextMenu(e.clientX, e.clientY);
   }
