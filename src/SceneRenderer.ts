@@ -1,7 +1,7 @@
 import { logError } from 'logging';
 import { coerceScene } from './coercion';
 import { DeepPartial } from 'types';
-import { getNoteFlags } from 'utils';
+import { getNoteFlags, localize } from 'utils';
 import { WeatherHandler } from "./WeatherHandler";
 
 type SceneDocument = TileDocument | TokenDocument | DrawingDocument | NoteDocument;
@@ -10,6 +10,7 @@ export class SceneRenderer {
   private _active = false;
   private _weatherHandler;
   private _initialized = false;
+  private _highlightTokensOnHover = false;
 
   private bgColorSprite: PIXI.Sprite;
   private bgImageSprite: PIXI.Sprite;
@@ -336,10 +337,78 @@ export class SceneRenderer {
     return texture;
   }
 
+  private tokenHovered = "";
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public async getContextMenuItems(data: { x: number, y: number }): Promise<foundry.applications.ux.ContextMenu.Entry<HTMLElement>[]> {
+    const items: foundry.applications.ux.ContextMenu.Entry<HTMLElement>[] = [];
+    if (this.tokenHovered) {
+      const doc = await fromUuid(this.tokenHovered as any);
+      if (doc instanceof TokenDocument) {
+        items.push({
+          name: localize(`MINIMAP.CONTEXTMENU.VIEWACTOR`, { name: doc.actor?.name ?? "" }),
+          icon: `<i class="fa-solid fa-user"></i>`,
+          condition: () => (game?.user && doc.actor?.testUserPermission(game.user, CONST.DOCUMENT_OWNERSHIP_LEVELS.OBSERVER)) ?? false,
+          callback: () => { if (doc.actor?.sheet) void doc.actor.sheet.render(true) }
+        })
+      }
+
+    }
+
+    return items;
+  }
+
+  private removeSpriteFiltersByType(sprite: PIXI.Sprite, filterType: typeof PIXI.Filter) {
+    if (Array.isArray(sprite.filters)) {
+      const filters = sprite.filters.filter(filter => filter instanceof filterType);
+      sprite.filters = sprite.filters.filter(filter => !(filter instanceof filterType));
+      filters.forEach(filter => { filter.destroy(); });
+    }
+  }
+
+  private onTokenMouseEnter(e: PIXI.FederatedPointerEvent, doc: TokenDocument, sprite: PIXI.Sprite) {
+    if (game?.user && doc.actor?.testUserPermission(game.user, CONST.DOCUMENT_OWNERSHIP_LEVELS.OBSERVER)) {
+      e.stopPropagation();
+      this.tokenHovered = doc.uuid;
+      if (this._highlightTokensOnHover) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        this.removeSpriteFiltersByType(sprite, (PIXI.filters as any).OutlineFilter as typeof PIXI.Filter);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+        const outline = new (PIXI.filters as any).OutlineFilter() as PIXI.Filter;
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        (outline as any).thickness = 0.5;
+        const dispKey = Object.entries(CONST.TOKEN_DISPOSITIONS).find(([, value]) => value === doc.disposition)?.[0] as keyof CONFIG.Canvas.DispositionColors | undefined;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        if (dispKey && CONFIG.Canvas.dispositionColors[dispKey]) (outline as any).color = CONFIG.Canvas.dispositionColors[dispKey];
+
+        if (Array.isArray(sprite.filters)) sprite.filters.push(outline);
+        else sprite.filters = [outline];
+      }
+    }
+  }
+
+  private onTokenMouseExit(e: PIXI.FederatedPointerEvent, doc: TokenDocument, sprite: PIXI.Sprite) {
+    e.stopPropagation();
+    this.tokenHovered = "";
+    if (this._highlightTokensOnHover) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      this.removeSpriteFiltersByType(sprite, (PIXI.filters as any).OutlineFilter as typeof PIXI.Filter);
+    }
+  }
+
   private createTileTokenSprite(doc: TileDocument | TokenDocument): PIXI.Sprite | undefined {
     const texture = this.createTileTokenTexture(doc);
     if (!texture) return;
-    return new PIXI.Sprite(texture);
+    const sprite = new PIXI.Sprite(texture);
+
+    if (doc instanceof TokenDocument) {
+      sprite.interactive = true;
+      sprite.addEventListener("pointerenter", e => { this.onTokenMouseEnter(e, doc, sprite); });
+      sprite.addEventListener("pointerleave", e => { this.onTokenMouseExit(e, doc, sprite); });
+    }
+
+    return sprite;
   }
 
   private createNoteTexture(doc: NoteDocument): PIXI.Texture | undefined {
@@ -559,6 +628,9 @@ export class SceneRenderer {
       this.sprites[doc.uuid] = sprite;
       this.container.addChild(sprite);
       this.documentUpdated(doc, {});
+
+
+
     } catch (err) {
       logError(err as Error);
     }

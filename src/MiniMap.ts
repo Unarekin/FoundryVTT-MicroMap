@@ -652,6 +652,8 @@ export class MiniMap {
     const game = await getGame();
     const currentMapMarker = this.mapMarkerUnderMouse?.config?.id;
 
+    const sceneEntries = this.mode === "scene" ? (await this.sceneRenderer.getContextMenuItems(data)) : [];
+
     return [
       {
         name: "MINIMAP.CONTEXTMENU.SETTINGS",
@@ -670,6 +672,7 @@ export class MiniMap {
           game.settings.sheet.render(true);
         }
       },
+      ...sceneEntries,
       {
         name: "MINIMAP.CONTEXTMENU.MARKERS.ADD",
         icon: `<i class="fa-solid fa-location-dot"></i>`,
@@ -978,7 +981,7 @@ export class MiniMap {
     this.overlayPlane.eventMode = "none";
 
     this.sceneSprite = new PIXI.Sprite();
-    this.sceneSprite.interactiveChildren = false;
+    this.sceneSprite.interactiveChildren = true;
     this.sceneSprite.name = "Scene Sprite";
 
     this.#bgSprite = new PIXI.Sprite(PIXI.Texture.WHITE);
