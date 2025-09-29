@@ -115,3 +115,9 @@ export interface MapMarkerConfig {
   labelAlign: LabelAlignment;
   fontColor: string;
 }
+
+export enum DRAG_MODE {
+  NONE,
+  PAN,
+  MARKER
+}

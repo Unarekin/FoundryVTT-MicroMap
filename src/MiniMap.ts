@@ -1,4 +1,4 @@
-import { MapMarkerConfig, MapMode, MapPosition, MapShape, MapView, OverlaySettings } from './types';
+import { DRAG_MODE, MapMarkerConfig, MapMode, MapPosition, MapShape, MapView, OverlaySettings } from './types';
 import { coerceScene } from './coercion';
 import { logError } from 'logging';
 import { getEffectiveFlagsForScene, getGame, localize, nineSliceScale } from 'utils';
@@ -13,6 +13,7 @@ export class MiniMap {
   private readonly markerContainer = new PIXI.Container();
 
   private _suppressUpdate = false;
+  #dragMode: DRAG_MODE = DRAG_MODE.NONE;
 
   public static readonly DefaultWidth = 300;
   public static readonly DefaultHeight = 200;
@@ -436,74 +437,46 @@ export class MiniMap {
 
   #draggingMarker = "";
 
+
   protected mapMarkerMouseDown(e: PIXI.FederatedPointerEvent, marker: MapMarkerConfig, sprite: PIXI.DisplayObject) {
-    getGame()
-      .then(game => {
-        if (game.user.isGM && e.button === 0) {
-          // Start drag
-          this.mapMarkerDragStart(e, marker, sprite);
-        }
-      }).catch(logError)
-
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  protected mapMarkerMouseUp(e: PIXI.FederatedPointerEvent, marker: MapMarkerConfig, sprite: PIXI.DisplayObject) {
-    // End drag
-    this.mapMarkerDrop(e);
+    if (game?.user?.isGM && e.button === 0) {
+      e.stopPropagation();
+      this.mapMarkerDragStart(marker, sprite);
+    }
   }
 
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  protected mapMarkerDragStart(e: PIXI.FederatedPointerEvent, marker: MapMarkerConfig, sprite: PIXI.DisplayObject) {
-    getGame()
-      .then(game => {
-        if (game.user.isGM) {
-          if (!canvas?.app?.stage) return;
-          this.#draggingMarker = marker.id;
-          if (this.#dragListener) canvas.app.stage.off("pointermove", this.#dragListener);
-          this.#dragListener = this.mapMarkerDrag.bind(this);
-          canvas.app.stage.on("pointermove", this.#dragListener);
-          e.preventDefault();
-          e.stopPropagation();
-        }
-      }).catch(logError);
+  protected mapMarkerDragStart(marker: MapMarkerConfig, sprite: PIXI.DisplayObject) {
+    this.#draggingMarker = marker.id;
+    this.#dragMode = DRAG_MODE.MARKER;
   }
 
   protected mapMarkerDrag(e: PIXI.FederatedPointerEvent) {
-    getGame()
-      .then(game => {
-        if (game.user.isGM) {
-          if (this.#draggingMarker) {
-            const marker = this.mapMarkers.find(item => item.id === this.#draggingMarker);
-            if (marker) {
-              e.stopPropagation();
-              e.preventDefault();
-              const global = new PIXI.Point(e.globalX, e.globalY);
-              const local = this.markerContainer.toLocal(global);
-              marker.x = Math.round(local.x)
-              marker.y = Math.round(local.y);
-              this.setMapMarkers(foundry.utils.deepClone(this.mapMarkers));
-            }
-          }
-
-        }
-      }).catch(logError);
+    if (game?.user?.isGM && this.#draggingMarker) {
+      const marker = this.mapMarkers.find(item => item.id === this.#draggingMarker);
+      if (marker) {
+        const global = new PIXI.Point(e.globalX, e.globalY);
+        const local = this.markerContainer.toLocal(global);
+        marker.x = Math.round(local.x)
+        marker.y = Math.round(local.y);
+        this.setMapMarkers(foundry.utils.deepClone(this.mapMarkers));
+      }
+    }
   }
+
 
 
   protected mapMarkerDrop(e: PIXI.FederatedPointerEvent) {
     this.#draggingMarker = "";
-    if (this.#dragListener) {
-      if (canvas?.app?.stage) canvas.app.stage.off("pointermove", this.#dragListener);
-      this.#dragListener = null;
-      e.preventDefault();
-      e.stopPropagation();
+    this.#dragMode = DRAG_MODE.NONE;
 
-      getGame()
-        .then(game => game.settings.set(__MODULE_ID__, "markers", foundry.utils.deepClone(this.mapMarkers)))
-        .catch(logError)
-    }
+    e.stopPropagation();
+    // e.preventDefault();
+
+    getGame()
+      .then(game => game.settings.set(__MODULE_ID__, "markers", foundry.utils.deepClone(this.mapMarkers)))
+      .catch(logError)
   }
 
   public refreshMapMarkers() {
@@ -632,7 +605,7 @@ export class MiniMap {
     sprite.addEventListener("pointerenter", e => { this.mapMarkerEnter(e, marker, container); });
     sprite.addEventListener("pointerleave", e => { this.mapMarkerLeave(e, marker, container); });
     sprite.addEventListener("pointerdown", e => { this.mapMarkerMouseDown(e, marker, container); });
-    sprite.addEventListener("pointerup", e => { this.mapMarkerMouseUp(e, marker, container); });
+    // sprite.addEventListener("pointerup", e => { this.mapMarkerMouseUp(e, marker, container); });
   }
 
   protected async createMapMarker(x: number, y: number) {
@@ -649,6 +622,31 @@ export class MiniMap {
   }
 
   // #endregion
+
+  // #region Map Pan
+
+  protected onPanStart(e: PIXI.FederatedPointerEvent) {
+    // e.preventDefault();
+    e.stopPropagation();
+    this.#dragMode = DRAG_MODE.PAN;
+  }
+
+  protected onPanMove(e: PIXI.FederatedPointerEvent) {
+    // e.preventDefault();
+    e.stopPropagation();
+    this.panX += e.movementX;
+    this.panY += e.movementY;
+    this.updateViewIfLocked().catch(logError);
+  }
+
+  protected onPanStop(e: PIXI.FederatedPointerEvent) {
+    // e.preventDefault();
+    e.stopPropagation();
+    this.#dragMode = DRAG_MODE.NONE;
+  }
+
+  // #endregion
+
 
   protected async getContextMenuItems(data: { x: number, y: number }): Promise<foundry.applications.ux.ContextMenu.Entry<HTMLElement>[]> {
     const game = await getGame();
@@ -896,41 +894,11 @@ export class MiniMap {
       .catch((err: Error) => { logError(err); });
   }
 
-  // #dragListener: (tyepof this.onDragMove) | null = null;
-  #dragListener: ((e: PIXI.FederatedPointerEvent) => void) | null = null;
 
-  protected onDragStart(e: PIXI.FederatedPointerEvent) {
-    if (!this.allowPan) return;
-    if (!canvas?.app?.stage) return;
-    if (this.#dragListener) canvas.app.stage.off("pointermove", this.#dragListener);
-    this.#dragListener = this.onDragMove.bind(this);
-    canvas.app.stage.on("pointermove", this.#dragListener);
-    e.preventDefault();
-    e.stopPropagation();
-  }
-
-  protected onDragEnd(e: PIXI.FederatedPointerEvent) {
-    if (this.#dragListener) {
-      if (canvas?.app?.stage) canvas.app.stage.off("pointermove", this.#dragListener);
-
-      this.#dragListener = null;
-      e.preventDefault();
-      e.stopPropagation();
-    }
-  }
-
-  protected onDragMove(e: PIXI.FederatedPointerEvent) {
-    if (!this.allowPan) return;
-    e.preventDefault();
-    e.stopPropagation();
-    this.panX += e.movementX;
-    this.panY += e.movementY;
-
-    void this.updateViewIfLocked();
-
-  }
 
   protected onRightClick(e: PIXI.FederatedPointerEvent) {
+    e.preventDefault();
+    e.stopPropagation();
     void this.showContextMenu(e.clientX, e.clientY);
   }
 
@@ -1038,23 +1006,42 @@ export class MiniMap {
       this.update();
 
     this.container.addEventListener("pointerdown", e => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (e.button === 0) this.onDragStart(e);
+      if (e.button === 0) this.onPanStart(e);
       else if (e.button === 2) this.onRightClick(e);
     });
+
+
+    this.container.addEventListener("pointermove", e => {
+      switch (this.#dragMode) {
+        case DRAG_MODE.MARKER:
+          this.mapMarkerDrag(e);
+          break;
+        case DRAG_MODE.PAN:
+          this.onPanMove(e);
+          break;
+      }
+    })
+
+
     this.container.addEventListener("pointerup", e => {
-      if (this.#draggingMarker) {
-        this.mapMarkerDrop(e);
-      } else {
-        this.onDragEnd(e);
+      switch (this.#dragMode) {
+        case DRAG_MODE.MARKER:
+          this.mapMarkerDrop(e);
+          break;
+        case DRAG_MODE.PAN:
+          this.onPanStop(e);
+          break;
       }
     });
-    this.container.addEventListener("pointerupoutside", e => {
-      if (this.#draggingMarker) {
-        this.mapMarkerDrop(e);
-      } else {
-        this.onDragEnd(e);
+
+    this.container.on("pointerupoutside", e => {
+      switch (this.#dragMode) {
+        case DRAG_MODE.MARKER:
+          this.mapMarkerDrop(e);
+          break;
+        case DRAG_MODE.PAN:
+          this.onPanStop(e);
+          break;
       }
     });
     // this.container.addEventListener("wheel", e => { this.onWheel(e); })

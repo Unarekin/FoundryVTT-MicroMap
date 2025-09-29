@@ -15,7 +15,7 @@ export class SceneRenderer {
   private bgImageSprite: PIXI.Sprite;
   private fgImageSprite: PIXI.Sprite;
   private darknessSprite: PIXI.Sprite;
-  private gridMesh: GridMesh;
+  private gridMesh: GridMesh | undefined = undefined;
 
   private _showWeather = true;
   public get showWeather() { return this._showWeather; }
