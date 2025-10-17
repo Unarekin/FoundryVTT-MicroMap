@@ -278,10 +278,9 @@ export class MiniMap {
 
   // protected get screenRight() { return window.innerWidth - this.width; }
   protected get screenRight() {
-
-    const uiRight = document.getElementById(game?.release?.isNewer("13") ? "chat-message" : "ui-right");
-    if (!(uiRight instanceof HTMLElement)) return window.innerWidth - this.width;
-    return uiRight.getBoundingClientRect().x - this.width;
+    const sidebar = document.getElementById("sidebar");
+    if (!(sidebar instanceof HTMLElement)) return window.innerWidth - this.width;
+    return sidebar.getBoundingClientRect().x - this.width;
   }
   protected get screenBottom() {
     const uiBottom = document.getElementById(game?.release?.isNewer("13") ? "hotbar" : "ui-bottom");
@@ -293,6 +292,41 @@ export class MiniMap {
     this.#mapContainer.scale.set(1, 1);
     this.#mapContainer.x = -this.#mapContainer.width / 2;
     this.#mapContainer.y = -this.#mapContainer.height / 2;
+  }
+
+  private easeOutBack(t: number, s = 1.70158): number {
+    return (t = t - 1) * t * ((s + 1) * t + s) + 1;
+  }
+
+
+  #tweenRequest = 0;
+
+  private tweenTo(x: number, y: number, duration = 500): Promise<void> {
+    return new Promise(resolve => {
+      if (this.#tweenRequest) cancelAnimationFrame(this.#tweenRequest);
+
+      const startX = this.container.x;
+      const startY = this.container.y;
+
+      const start = Date.now();
+      const doTween = () => {
+        const currentDuration = Date.now() - start;
+
+        const t = (Date.now() - start) / duration;
+        if (t >= 1) {
+          this.container.x = x;
+          this.container.y = y;
+          this.#tweenRequest = 0;
+          resolve();
+        } else {
+          this.container.x = startX + (x - startX) * this.easeOutBack(currentDuration / duration);
+          this.container.y = startY + (y - startY) * this.easeOutBack(currentDuration / duration);
+          this.#tweenRequest = requestAnimationFrame(doTween);
+        }
+      }
+
+      this.#tweenRequest = requestAnimationFrame(doTween);
+    })
   }
 
   /**
@@ -326,20 +360,24 @@ export class MiniMap {
     if (this.container?.parent) {
       switch (this.position) {
         case "bottomLeft":
-          this.container.x = this.screenLeft + this.padding.x;
-          this.container.y = this.screenBottom - this.padding.y;
+          this.tweenTo(this.screenLeft + this.padding.x, this.screenBottom - this.padding.y).catch(logError);
+          // this.container.x = this.screenLeft + this.padding.x;
+          // this.container.y = this.screenBottom - this.padding.y;
           break;
         case "bottomRight":
-          this.container.x = this.screenRight - this.padding.x;
-          this.container.y = this.screenBottom - this.padding.y;
+          this.tweenTo(this.screenRight - this.padding.x, this.screenBottom - this.padding.y).catch(logError);
+          // this.container.x = this.screenRight - this.padding.x;
+          // this.container.y = this.screenBottom - this.padding.y;
           break;
         case "topLeft":
-          this.container.x = this.screenLeft + this.padding.x;
-          this.container.y = this.screenTop + this.padding.y;
+          this.tweenTo(this.screenLeft + this.padding.x, this.screenTop + this.padding.y).catch(logError);
+          // this.container.x = this.screenLeft + this.padding.x;
+          // this.container.y = this.screenTop + this.padding.y;
           break;
         case "topRight":
-          this.container.x = this.screenRight - this.padding.x;
-          this.container.y = this.screenTop + this.padding.y;
+          this.tweenTo(this.screenRight - this.padding.x, this.screenTop + this.padding.y).catch(logError);
+          // this.container.x = this.screenRight - this.padding.x;
+          // this.container.y = this.screenTop + this.padding.y;
           break;
       }
     }
