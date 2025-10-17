@@ -193,7 +193,7 @@ export class MiniMap {
   public set position(val) {
     if (val !== this.position) {
       this._position = val;
-      this.update();
+      this.update(false);
     }
   }
 
@@ -332,7 +332,7 @@ export class MiniMap {
   /**
    * Updates the visuals of our minimap in accordance with its settings.
    */
-  public update() {
+  public update(animate = true) {
     if (this._suppressUpdate) return;
     this.staticSprite.visible = this.mode === "image" && !!this.image;
     this.sceneSprite.visible = this.mode === "scene" && !!this.scene;
@@ -360,24 +360,36 @@ export class MiniMap {
     if (this.container?.parent) {
       switch (this.position) {
         case "bottomLeft":
-          this.tweenTo(this.screenLeft + this.padding.x, this.screenBottom - this.padding.y).catch(logError);
-          // this.container.x = this.screenLeft + this.padding.x;
-          // this.container.y = this.screenBottom - this.padding.y;
+          if (animate) {
+            this.tweenTo(this.screenLeft + this.padding.x, this.screenBottom - this.padding.y).catch(logError);
+          } else {
+            this.container.x = this.screenLeft + this.padding.x;
+            this.container.y = this.screenBottom - this.padding.y;
+          }
           break;
         case "bottomRight":
-          this.tweenTo(this.screenRight - this.padding.x, this.screenBottom - this.padding.y).catch(logError);
-          // this.container.x = this.screenRight - this.padding.x;
-          // this.container.y = this.screenBottom - this.padding.y;
+          if (animate) {
+            this.tweenTo(this.screenRight - this.padding.x, this.screenBottom - this.padding.y).catch(logError);
+          } else {
+            this.container.x = this.screenRight - this.padding.x;
+            this.container.y = this.screenBottom - this.padding.y;
+          }
           break;
         case "topLeft":
-          this.tweenTo(this.screenLeft + this.padding.x, this.screenTop + this.padding.y).catch(logError);
-          // this.container.x = this.screenLeft + this.padding.x;
-          // this.container.y = this.screenTop + this.padding.y;
+          if (animate) {
+            this.tweenTo(this.screenLeft + this.padding.x, this.screenTop + this.padding.y).catch(logError);
+          } else {
+            this.container.x = this.screenLeft + this.padding.x;
+            this.container.y = this.screenTop + this.padding.y;
+          }
           break;
         case "topRight":
-          this.tweenTo(this.screenRight - this.padding.x, this.screenTop + this.padding.y).catch(logError);
-          // this.container.x = this.screenRight - this.padding.x;
-          // this.container.y = this.screenTop + this.padding.y;
+          if (animate) {
+            this.tweenTo(this.screenRight - this.padding.x, this.screenTop + this.padding.y).catch(logError);
+          } else {
+            this.container.x = this.screenRight - this.padding.x;
+            this.container.y = this.screenTop + this.padding.y;
+          }
           break;
       }
     }
