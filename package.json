@@ -1,6 +1,6 @@
 {
   "name": "foundryvtt-micromap",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "A FoundryVTT module to show an insert with a MicroMap.",
   "keywords": [
     "foundry",
