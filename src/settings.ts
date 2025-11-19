@@ -1,7 +1,7 @@
 import { getGame, getMiniMap, localize } from "./utils";
 import { log, logError } from "./logging";
 import { MiniMap } from "MiniMap";
-import { MapPosition, MapShape, OverlaySettings, MapMode, MapView, MapMarkerConfig } from './types';
+import { MapPosition, MapShape, OverlaySettings, MapMode, MapView, MapMarkerConfig, CanvasData } from './types';
 import { MapMarkerSettingsApplication, OverlaySettingsApplication } from "./applications";
 import { synchronizeView } from "sockets";
 
@@ -31,6 +31,7 @@ declare global {
     "micro-map.showDrawings": boolean;
     "micro-map.showNotes": boolean;
     "micro-map.showGrid": boolean;
+    "micro-map.canvasData": CanvasData
   }
 }
 
@@ -129,7 +130,8 @@ Hooks.once("init", () => {
         requiresReload: false,
         choices: {
           "image": "Image",
-          "scene": "DOCUMENT.Scene"
+          "scene": "DOCUMENT.Scene",
+          "canvas": "MINIMAP.SETTINGS.CANVAS.NAME"
         },
         onChange(value: MapMode) {
           const map = getMiniMap();
@@ -452,6 +454,24 @@ Hooks.once("init", () => {
         }
       })
 
+
+      game.settings.register(__MODULE_ID__, "canvasData", {
+        scope: "world",
+        config: false,
+        type: Object,
+        default: {
+          width: 0,
+          height: 0,
+          data: [],
+          colorSpace: "srgb"
+        },
+        onChange() {
+          const map = getMiniMap();
+          if (!(map instanceof MiniMap)) return;
+
+          void map.loadCanvas();
+        }
+      })
 
       log("Settings registered");
     })

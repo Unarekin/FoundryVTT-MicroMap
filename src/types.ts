@@ -1,4 +1,4 @@
-export const MapModes = ["image", "scene"] as const;
+export const MapModes = ["image", "scene", "canvas"] as const;
 export type MapMode = typeof MapModes[number];
 
 export const MapShapes = ["rectangle", "circle", "diamond", "mask"] as const;
@@ -66,6 +66,7 @@ export interface SceneFlags {
   mode: MapMode;
   image?: string;
   scene?: string;
+  canvasData?: CanvasData;
   position: MapPosition;
   bgColor: string;
   padX: number;
@@ -120,4 +121,11 @@ export enum DRAG_MODE {
   NONE,
   PAN,
   MARKER
+}
+
+export interface CanvasData {
+  colorSpace: PredefinedColorSpace;
+  width: number;
+  height: number;
+  data: number[];
 }

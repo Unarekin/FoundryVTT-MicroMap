@@ -79,6 +79,12 @@ export function getNoteFlags(note: NoteDocument): NoteFlags {
 }
 
 export function defaultSceneFlags(): SceneFlags {
+  const canvasData = game?.settings?.get(__MODULE_ID__, "canvasData") ?? {
+    width: 0,
+    height: 0,
+    colorSpace: "srgb",
+    data: []
+  }
   return {
     override: false,
     show: game?.settings?.get(__MODULE_ID__, "enable") ?? false,
@@ -87,6 +93,12 @@ export function defaultSceneFlags(): SceneFlags {
     mode: (game?.settings?.get(__MODULE_ID__, "mode") ?? "image") as MapMode,
     image: game?.settings?.get(__MODULE_ID__, "image") ?? "",
     scene: game?.settings?.get(__MODULE_ID__, "scene") ?? "",
+    canvasData: {
+      width: canvasData.width ?? 0,
+      height: canvasData.height ?? 0,
+      colorSpace: canvasData.colorSpace ?? "srgb",
+      data: canvasData.data ?? []
+    },
     position: (game?.settings?.get(__MODULE_ID__, "position") ?? "bottomright") as MapPosition,
     bgColor: game?.settings?.get(__MODULE_ID__, "bgColor") ?? "#000000",
     padX: game?.settings?.get(__MODULE_ID__, "padX") ?? 0,

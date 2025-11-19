@@ -61,6 +61,15 @@ Hooks.once("canvasReady", () => {
     menuContainer.appendChild(menuElem);
 
     log("Canvas group initialized.");
+
+    getGame()
+      .then(game => {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        (game as any).MicroMap = {
+          map: canvasGroup.miniMap
+        }
+      })
+      .catch(logError);
   } catch (err) {
     logError(err as Error);
   }
@@ -88,6 +97,7 @@ function updateMap(scene: Scene) {
   map.showDrawings = settings.showDrawings;
   map.showNotes = settings.showNotes;
   map.setOverlayFromSettings(settings.overlaySettings);
+  map.loadCanvas();
 }
 
 Hooks.on("updateScene", (scene: Scene, delta: DeepPartial<Scene>) => {
