@@ -66,6 +66,7 @@ export interface SceneFlags {
   mode: MapMode;
   image?: string;
   scene?: string;
+  canvasData?: CanvasData;
   position: MapPosition;
   bgColor: string;
   padX: number;

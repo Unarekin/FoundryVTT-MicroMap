@@ -97,6 +97,7 @@ function updateMap(scene: Scene) {
   map.showDrawings = settings.showDrawings;
   map.showNotes = settings.showNotes;
   map.setOverlayFromSettings(settings.overlaySettings);
+  map.loadCanvas();
 }
 
 Hooks.on("updateScene", (scene: Scene, delta: DeepPartial<Scene>) => {

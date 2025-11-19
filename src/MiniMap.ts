@@ -1,4 +1,4 @@
-import { DRAG_MODE, MapMarkerConfig, MapMode, MapPosition, MapShape, MapView, OverlaySettings } from './types';
+import { CanvasData, DRAG_MODE, MapMarkerConfig, MapMode, MapPosition, MapShape, MapView, OverlaySettings } from './types';
 import { coerceScene } from './coercion';
 import { log, logError } from 'logging';
 import { getEffectiveFlagsForScene, getGame, localize, nineSliceScale } from 'utils';
@@ -568,16 +568,20 @@ export class MiniMap {
     }
   }
 
-  public async loadCanvas() {
+  public loadCanvas() {
     try {
-      const game = await getGame();
-      const data = game.settings.get(__MODULE_ID__, "canvasData");
-
-      // If no data set, bail
-      if (!data.width || !data.height || !data.data.length) return;
+      const settings = getEffectiveFlagsForScene(canvas.scene instanceof Scene ? canvas.scene : undefined);
+      // const data = game.settings.get(__MODULE_ID__, "canvasData");
 
       const ctx = this.canvas.getContext("2d");
       if (!ctx) return;
+      ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+      const data = settings.canvasData;
+      if (!data) return;
+
+      // If no data set, bail
+      if (!data.width || !data.height || !data.data.length) return;
 
 
       const imageData = ctx.createImageData(data.width, data.height, { colorSpace: data.colorSpace });
@@ -587,7 +591,6 @@ export class MiniMap {
       if (this.canvas.width !== data.width) this.canvas.width = data.width;
       if (this.canvas.height !== data.height) this.canvas.height = data.height;
 
-      ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       ctx.putImageData(imageData, 0, 0);
     } catch (err) {
       logError(err as Error);
@@ -613,13 +616,22 @@ export class MiniMap {
       const data = ctx.getImageData(0, 0, this.canvas.width, this.canvas.height)
       // console.log("Canvas data:", data);
 
-      const game = await getGame();
-      await game.settings.set(__MODULE_ID__, "canvasData", {
+      const canvasData: CanvasData = {
         width: data.width,
         height: data.height,
         colorSpace: data.colorSpace,
-        data: [...data.data]
-      });
+        data: data.data.some(item => item !== 0) ? [...data.data] : []
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      if ((canvas?.scene?.flags as any)[__MODULE_ID__]?.override) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+        await (canvas.scene as any).setFlag(__MODULE_ID__, "canvasData", canvasData);
+      } else {
+        // Save globally
+        const game = await getGame();
+        await game.settings.set(__MODULE_ID__, "canvasData", canvasData);
+      }
 
       log(`Canvas saved in ${Date.now() - start}ms`);
     } catch (err) {

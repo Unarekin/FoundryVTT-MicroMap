@@ -9,7 +9,8 @@ const POSITION_SELECT: Record<MapPosition, string> = {
 
 const MODE_SELECT: Record<MapMode, string> = {
   image: "Image",
-  scene: "DOCUMENT.Scene"
+  scene: "DOCUMENT.Scene",
+  canvas: "MINIMAP.SETTINGS.CANVAS.NAME"
 };
 
 const SHAPE_SELECT: Record<MapShape, string> = {

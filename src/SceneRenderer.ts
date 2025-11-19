@@ -1,4 +1,4 @@
-import { logError } from 'logging';
+import { log, logError } from 'logging';
 import { coerceScene } from './coercion';
 import { DeepPartial } from 'types';
 import { getNoteFlags, localize } from 'utils';
@@ -154,6 +154,9 @@ export class SceneRenderer {
     if (oldTexture) oldTexture.destroy();
 
 
+    log("Setting bg texture:", this.scene.width, this.scene.height);
+    log(this.bgImageSprite)
+
     this.bgImageSprite.width = this.scene.width!;
     this.bgImageSprite.height = this.scene.height!;
 
@@ -165,6 +168,8 @@ export class SceneRenderer {
   private drawBackgroundImage() {
     try {
       if (!this.scene) return;
+
+
 
       if (this.scene.background.src) {
         const texture = PIXI.Texture.from(this.scene.background.src);
