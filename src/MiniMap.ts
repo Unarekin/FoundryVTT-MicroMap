@@ -755,6 +755,7 @@ export class MiniMap {
   }
 
   protected onPanMove(e: PIXI.FederatedPointerEvent) {
+    if (!this.allowPan) return;
     // e.preventDefault();
     e.stopPropagation();
     this.panX += e.movementX;
