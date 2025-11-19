@@ -1,6 +1,6 @@
 import { DRAG_MODE, MapMarkerConfig, MapMode, MapPosition, MapShape, MapView, OverlaySettings } from './types';
 import { coerceScene } from './coercion';
-import { logError } from 'logging';
+import { log, logError } from 'logging';
 import { getEffectiveFlagsForScene, getGame, localize, nineSliceScale } from 'utils';
 import { SceneRenderer } from './SceneRenderer';
 import { synchronizeView } from 'sockets';
@@ -47,8 +47,12 @@ export class MiniMap {
     this.sceneRenderer.antiAliasing = val;
   }
 
+  public readonly canvas = document.createElement("canvas");
+
   #bgSprite: PIXI.Sprite;
   #mapContainer = new PIXI.Container();
+  #canvasTexture: PIXI.Texture;
+  canvasSprite: PIXI.Sprite;
 
   protected readonly sceneRenderer: SceneRenderer
 
@@ -329,13 +333,23 @@ export class MiniMap {
     })
   }
 
+  protected serializeCanvas(): Uint8ClampedArray {
+    const ctx = this.canvas.getContext("2d");
+    if (!ctx) return Uint8ClampedArray.from([]);
+
+    return ctx.getImageData(0, 0, this.canvas.width, this.canvas.height).data;
+  }
+
   /**
-   * Updates the visuals of our minimap in accordance with its settings.
-   */
+ * Updates the visuals of our minimap in accordance with its settings.
+ */
   public update(animate = true) {
     if (this._suppressUpdate) return;
+
+
     this.staticSprite.visible = this.mode === "image" && !!this.image;
     this.sceneSprite.visible = this.mode === "scene" && !!this.scene;
+    this.canvasSprite.visible = this.mode === "canvas";
 
     // this.staticSprite.width = this.width;
     // this.staticSprite.height = this.height;
@@ -549,6 +563,65 @@ export class MiniMap {
       this.setMapMarkers([]);
       const game = await getGame()
       await game.settings.set(__MODULE_ID__, "markers", foundry.utils.deepClone(this.mapMarkers));
+    } catch (err) {
+      logError(err as Error);
+    }
+  }
+
+  public async loadCanvas() {
+    try {
+      const game = await getGame();
+      const data = game.settings.get(__MODULE_ID__, "canvasData");
+
+      // If no data set, bail
+      if (!data.width || !data.height || !data.data.length) return;
+
+      const ctx = this.canvas.getContext("2d");
+      if (!ctx) return;
+
+
+      const imageData = ctx.createImageData(data.width, data.height, { colorSpace: data.colorSpace });
+      imageData.data.set(data.data);
+
+
+      if (this.canvas.width !== data.width) this.canvas.width = data.width;
+      if (this.canvas.height !== data.height) this.canvas.height = data.height;
+
+      ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      ctx.putImageData(imageData, 0, 0);
+    } catch (err) {
+      logError(err as Error);
+    }
+  }
+
+  public async clearCanvas() {
+    try {
+      const ctx = this.canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      await this.saveCanvas();
+    } catch (err) {
+      logError(err as Error);
+    }
+  }
+
+  public async saveCanvas() {
+    try {
+      const start = Date.now();
+      const ctx = this.canvas.getContext("2d");
+      if (!ctx) return;
+      const data = ctx.getImageData(0, 0, this.canvas.width, this.canvas.height)
+      // console.log("Canvas data:", data);
+
+      const game = await getGame();
+      await game.settings.set(__MODULE_ID__, "canvasData", {
+        width: data.width,
+        height: data.height,
+        colorSpace: data.colorSpace,
+        data: [...data.data]
+      });
+
+      log(`Canvas saved in ${Date.now() - start}ms`);
     } catch (err) {
       logError(err as Error);
     }
@@ -961,15 +1034,29 @@ export class MiniMap {
   }
 
   public get baseWidth() {
-    if (this.mode === "image") return this.staticSprite.texture.width;
-    else if (this.mode === "scene") return this.scene?.dimensions.sceneWidth ?? 0;
-    else return 0;
+    switch (this.mode) {
+      case "image":
+        return this.staticSprite.texture.width;
+      case "scene":
+        return this.scene?.dimensions.sceneWidth ?? 0;
+      case "canvas":
+        return this.canvas.width;
+      default:
+        return 0;
+    }
   }
 
   public get baseHeight() {
-    if (this.mode === "image") return this.staticSprite.texture.height;
-    else if (this.mode === "scene") return this.scene?.dimensions.sceneHeight ?? 0;
-    else return 0;
+    switch (this.mode) {
+      case "image":
+        return this.staticSprite.texture.height;
+      case "scene":
+        return this.scene?.dimensions.sceneHeight ?? 0;
+      case "canvas":
+        return this.canvas.height;
+      default:
+        return 0;
+    }
   }
 
   public readonly zoomStep = .025;
@@ -1036,12 +1123,16 @@ export class MiniMap {
     this.#bgSprite = new PIXI.Sprite(PIXI.Texture.WHITE);
     this.#bgSprite.name = "Background Sprite";
 
+    this.#canvasTexture = PIXI.Texture.from(this.canvas);
+    this.canvasSprite = new PIXI.Sprite(this.#canvasTexture);
+
     this.markerContainer.name = "Map Markers";
     this.markerContainer.zIndex = 10000;
 
     this.container.addChild(this.#bgSprite);
     this.#mapContainer.addChild(this.staticSprite);
     this.#mapContainer.addChild(this.sceneSprite);
+    this.#mapContainer.addChild(this.canvasSprite);
     this.#mapContainer.addChild(this.markerContainer);
     this.container.addChild(this.#mapContainer);
     this.container.addChild(this.overlayPlane);
@@ -1125,6 +1216,9 @@ export class MiniMap {
       }
     });
 
+
+    // Set up webworker
+
     getGame()
       .then(game => {
         try {
@@ -1172,14 +1266,17 @@ export class MiniMap {
 
           this.setMask(this.shape);
 
+          game.canvas?.app?.ticker.add(() => {
+            if (this.mode === "canvas") this.#canvasTexture.update();
+          });
 
-          return this.setMapMarkers(game.settings.get(__MODULE_ID__, "markers"));
+          this.setMapMarkers(game.settings.get(__MODULE_ID__, "markers"));
+          return this.loadCanvas();
         } catch (err) {
           logError(err as Error);
         } finally {
           this._suppressUpdate = false;
           this.update();
-          // if (this.scene && this.mode === "scene") this.sceneRenderer.active = true;
         }
       })
       .catch((err: Error) => { logError(err); })

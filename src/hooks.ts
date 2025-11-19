@@ -61,6 +61,15 @@ Hooks.once("canvasReady", () => {
     menuContainer.appendChild(menuElem);
 
     log("Canvas group initialized.");
+
+    getGame()
+      .then(game => {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        (game as any).MicroMap = {
+          map: canvasGroup.miniMap
+        }
+      })
+      .catch(logError);
   } catch (err) {
     logError(err as Error);
   }

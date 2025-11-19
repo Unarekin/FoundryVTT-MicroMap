@@ -87,6 +87,10 @@
         "HINT": "If enabled, will show the grid for scene-type minimaps.",
         "NAME": "Show Scene Grid"
       },
+      "CANVAS": {
+        "NAME": "Canvas",
+        "HINT": ""
+      },
       "SHOWNOTES": {
         "HINT": "If enabled, will show map notes for scene-type minimaps.",
         "NAME": "Show Map Notes"
