@@ -9,17 +9,25 @@ Hooks.once("init", () => {
   registerKeyBindings();
 });
 
+function applyMixin(collection: Record<string, any>, mixin: any) {
+  const entries = Object.entries(collection);
+  for (const [key, { cls }] of entries) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+    const mixed = mixin(cls);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    collection[key].cls = mixed;
+  }
+}
+
 Hooks.once("ready", () => {
   getGame()
     .then(game => {
 
       const noteConfigMixin = game.release.isNewer("13") ? NoteConfigV2Mixin : NoteConfigV1Mixin;
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment
-      CONFIG.Note.sheetClasses.base["core.NoteConfig"].cls = noteConfigMixin(CONFIG.Note.sheetClasses.base["core.NoteConfig"].cls as any) as any;
+      applyMixin(CONFIG.Note.sheetClasses.base, noteConfigMixin);
 
       const sceneConfigMixin = game.release.isNewer("13") ? SceneConfigV2Mixin : SceneConfigV1Mixin;
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment
-      CONFIG.Scene.sheetClasses.base["core.SceneConfig"].cls = sceneConfigMixin(CONFIG.Scene.sheetClasses.base["core.SceneConfig"].cls as any) as any;
+      applyMixin(CONFIG.Scene.sheetClasses.base, sceneConfigMixin);
 
     }).catch(logError);
 
