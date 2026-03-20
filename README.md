@@ -16,6 +16,8 @@
   - [FAQ](#faq)
 - [Support](#support)
 - [Attributions \& Acknowledgements](#attributions--acknowledgements)
+- [Socials](#socials)
+- [100% Human Made](#100-human-made)
 
 # MicroMap
 
@@ -69,7 +71,11 @@ The module also includes assets from the following:
 - [Tiny RPG - Dragon Regalia GUI](https://opengameart.org/content/tiny-rpg-dragon-regalia-gui) and [Tiny RPG - Mana Soul GUI](https://opengameart.org/content/tiny-rpg-mana-soul-gui), both by tiopalada, released under the [CC-0](https://creativecommons.org/publicdomain/zero/1.0/) license.
 
 # Support
+Do please consider throwing me a few bucks over on [Ko-Fi](https://ko-fi.com/unarekin) or [Patreon](https://www.patreon.com/BattleTransitions) if you like what you see and are feeling generous.  Every little bit helps.
 
-Do please consider throwing me a few bucks over on [Ko-Fi](https://ko-fi.com/unarekin) if you like what you see and are feeling generous.
+# Socials
+- [Linktree](https://linktr.ee/EricasCodebin)
+- [Discord](https://discord.gg/RaFYSW9Vcp)
 
-<a href='https://ko-fi.com/C0C2156VW2' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi6.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
+# 100% Human-made
+This module contains exactly 0% AI-generated content, whether that be code generation, code *completion*, documentation, art assets, etc.  None, never.  I don't need a torment nexus to write bad code, I can do that well enough on my own.
