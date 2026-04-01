@@ -60,7 +60,7 @@ export const DefaultNoteFlags: NoteFlags = {
 
 export interface SceneFlags {
   override: boolean;
-  show: boolean;
+  enable: boolean;
   width: number;
   height: number;
   mode: MapMode;

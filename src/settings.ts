@@ -1,4 +1,4 @@
-import { getGame, getMiniMap, localize } from "./utils";
+import { getEffectiveFlagsForScene, getGame, getMiniMap, localize } from "./utils";
 import { log, logError } from "./logging";
 import { MiniMap } from "MiniMap";
 import { MapPosition, MapShape, OverlaySettings, MapMode, MapView, MapMarkerConfig, CanvasData } from './types';
@@ -66,7 +66,13 @@ Hooks.once("init", () => {
         onChange(value: boolean) {
           const map = getMiniMap();
           if (!(map instanceof MiniMap)) return;
-          map.visible = value && game.settings.get(__MODULE_ID__, "enable");
+          let enabled = false;
+          if (canvas.scene) {
+            const settings = getEffectiveFlagsForScene(canvas.scene);
+            if (settings.override && settings.enable) enabled = true;
+            else enabled = game.settings.get(__MODULE_ID__, "enable");
+          }
+          map.visible = value && enabled;
         }
       });
 
