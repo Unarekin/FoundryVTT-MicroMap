@@ -99,7 +99,7 @@ function updateMap(scene: Scene) {
   map.shape = settings.shape;
   map.mask = settings.mask;
   // TODO Probably the source for #21
-  map.visible = settings.enable;
+  map.visible = settings.enable && !!(game.settings?.get(__MODULE_ID__, "show"));
   map.position = settings.position;
   map.showWeather = settings.showWeather;
   map.showDarkness = settings.showDarkness;
