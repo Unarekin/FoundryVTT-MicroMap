@@ -10,7 +10,7 @@ export class SceneRenderer {
   private _active = false;
   private _weatherHandler;
   private _initialized = false;
-  private _highlightTokensOnHover = false;
+  private _highlightTokensOnHover = true;
 
   private bgColorSprite: PIXI.Sprite;
   private bgImageSprite: PIXI.Sprite;
@@ -401,9 +401,16 @@ export class SceneRenderer {
     const sprite = new PIXI.Sprite(texture);
 
     if (doc instanceof TokenDocument) {
-      sprite.interactive = true;
-      sprite.addEventListener("pointerenter", e => { this.onTokenMouseEnter(e, doc, sprite); });
-      sprite.addEventListener("pointerleave", e => { this.onTokenMouseExit(e, doc, sprite); });
+      if (game.user?.isGM || doc.disposition !== -2) {
+        sprite.interactive = true;
+
+        if (game.user && doc.actor?.testUserPermission(game.user, CONST.DOCUMENT_OWNERSHIP_LEVELS.OBSERVER)) {
+          sprite.cursor = "pointer";
+        }
+
+        sprite.addEventListener("pointerenter", e => { this.onTokenMouseEnter(e, doc, sprite); });
+        sprite.addEventListener("pointerleave", e => { this.onTokenMouseExit(e, doc, sprite); });
+      }
     }
 
     return sprite;

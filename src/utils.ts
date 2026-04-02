@@ -87,7 +87,7 @@ export function defaultSceneFlags(): SceneFlags {
   }
   return {
     override: false,
-    show: game?.settings?.get(__MODULE_ID__, "enable") ?? false,
+    enable: game?.settings?.get(__MODULE_ID__, "enable") ?? false,
     width: game?.settings?.get(__MODULE_ID__, "width") ?? 256,
     height: game?.settings?.get(__MODULE_ID__, "height") ?? 256,
     mode: (game?.settings?.get(__MODULE_ID__, "mode") ?? "image") as MapMode,

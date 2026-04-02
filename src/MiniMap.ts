@@ -764,6 +764,7 @@ export class MiniMap {
     // e.preventDefault();
     e.stopPropagation();
     this.#dragMode = DRAG_MODE.PAN;
+    this.container.cursor = "grabbing";
   }
 
   protected onPanMove(e: PIXI.FederatedPointerEvent) {
@@ -779,6 +780,7 @@ export class MiniMap {
     // e.preventDefault();
     e.stopPropagation();
     this.#dragMode = DRAG_MODE.NONE;
+    this.container.cursor = "grab";
   }
 
   // #endregion
@@ -1117,6 +1119,8 @@ export class MiniMap {
     this.container.interactiveChildren = true;
     this.container.eventMode = "dynamic";
 
+    this.container.cursor = "grab";
+
     if (this.image)
       this.staticSprite = PIXI.Sprite.from(this.image);
     else
@@ -1238,7 +1242,7 @@ export class MiniMap {
           const settings = getEffectiveFlagsForScene(canvas.scene instanceof Scene ? canvas.scene : undefined);
 
           this._suppressUpdate = true;
-          this.visible = !!settings.show;
+          this.visible = !!settings.enable && !!game.settings.get(__MODULE_ID__, "show");
           this.position = settings.position;
           this.shape = settings.shape;
           // this.padding = game.settings.get(__MODULE_ID__, "padding");

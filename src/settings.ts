@@ -1,39 +1,9 @@
-import { getGame, getMiniMap, localize } from "./utils";
+import { getEffectiveFlagsForScene, getGame, getMiniMap, localize } from "./utils";
 import { log, logError } from "./logging";
 import { MiniMap } from "MiniMap";
-import { MapPosition, MapShape, OverlaySettings, MapMode, MapView, MapMarkerConfig, CanvasData } from './types';
+import { MapPosition, MapShape, OverlaySettings, MapMode, MapMarkerConfig } from './types';
 import { MapMarkerSettingsApplication, OverlaySettingsApplication } from "./applications";
 import { synchronizeView } from "sockets";
-
-declare global {
-  interface SettingConfig {
-    "micro-map.enable": boolean;
-    "micro-map.show": boolean;
-    "micro-map.unlockPlayers": boolean;
-    "micro-map.lockGMView": boolean;
-    "micro-map.mode": MapMode;
-    "micro-map.image": string;
-    "micro-map.scene": string;
-    "micro-map.position": MapPosition;
-    "micro-map.bgColor": string;
-    "micro-map.width": number;
-    "micro-map.height": number;
-    "micro-map.shape": MapShape;
-    "micro-map.mask": string;
-    "micro-map.overlaySettings": OverlaySettings;
-    "micro-map.view": MapView;
-    "micro-map.padX": number;
-    "micro-map.padY": number;
-    "micro-map.disableAntiAliasing": boolean;
-    "micro-map.markers": MapMarkerConfig[];
-    "micro-map.showWeather": boolean;
-    "micro-map.showDarkness": boolean;
-    "micro-map.showDrawings": boolean;
-    "micro-map.showNotes": boolean;
-    "micro-map.showGrid": boolean;
-    "micro-map.canvasData": CanvasData
-  }
-}
 
 Hooks.once("init", () => {
 
@@ -66,7 +36,13 @@ Hooks.once("init", () => {
         onChange(value: boolean) {
           const map = getMiniMap();
           if (!(map instanceof MiniMap)) return;
-          map.visible = value && game.settings.get(__MODULE_ID__, "enable");
+          let enabled = false;
+          if (canvas.scene) {
+            const settings = getEffectiveFlagsForScene(canvas.scene);
+            if (settings.override && settings.enable) enabled = true;
+            else enabled = game.settings.get(__MODULE_ID__, "enable");
+          }
+          map.visible = value && enabled;
         }
       });
 

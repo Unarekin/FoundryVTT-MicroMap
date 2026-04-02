@@ -98,7 +98,7 @@ function updateMap(scene: Scene) {
   map.scene = settings.scene ?? "";
   map.shape = settings.shape;
   map.mask = settings.mask;
-  map.visible = settings.show;
+  map.visible = settings.enable && !!(game.settings?.get(__MODULE_ID__, "show"));
   map.position = settings.position;
   map.showWeather = settings.showWeather;
   map.showDarkness = settings.showDarkness;
