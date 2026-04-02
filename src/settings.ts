@@ -83,7 +83,7 @@ Hooks.once("init", () => {
         type: Boolean,
         default: false,
         requiresReload: false,
-        onChange: (value: boolean, data: unknown, user: string) {
+        onChange(value: boolean, data: unknown, user: string) {
           const map = getMiniMap();
           if (!(map instanceof MiniMap)) return;
           map.lockGMView = value;
