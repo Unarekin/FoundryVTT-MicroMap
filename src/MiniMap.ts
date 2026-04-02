@@ -1242,7 +1242,7 @@ export class MiniMap {
           const settings = getEffectiveFlagsForScene(canvas.scene instanceof Scene ? canvas.scene : undefined);
 
           this._suppressUpdate = true;
-          this.visible = !!settings.show;
+          this.visible = !!settings.enable && !!game.settings.get(__MODULE_ID__, "show");
           this.position = settings.position;
           this.shape = settings.shape;
           // this.padding = game.settings.get(__MODULE_ID__, "padding");
