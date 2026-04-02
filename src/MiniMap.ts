@@ -764,6 +764,7 @@ export class MiniMap {
     // e.preventDefault();
     e.stopPropagation();
     this.#dragMode = DRAG_MODE.PAN;
+    this.container.cursor = "grabbing";
   }
 
   protected onPanMove(e: PIXI.FederatedPointerEvent) {
@@ -779,6 +780,7 @@ export class MiniMap {
     // e.preventDefault();
     e.stopPropagation();
     this.#dragMode = DRAG_MODE.NONE;
+    this.container.cursor = "grab";
   }
 
   // #endregion
@@ -1116,6 +1118,8 @@ export class MiniMap {
     this.container.interactive = true;
     this.container.interactiveChildren = true;
     this.container.eventMode = "dynamic";
+
+    this.container.cursor = "grab";
 
     if (this.image)
       this.staticSprite = PIXI.Sprite.from(this.image);
