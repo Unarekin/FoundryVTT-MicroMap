@@ -1,7 +1,7 @@
 {
   "id": "micro-map",
   "title": "MicroMap",
-  "description": "",
+  "description": "A FoundryVTT module to show an insert with a minimap.",
   "version": "#{VERSION}#",
   "library": "false",
   "compatibility": {
